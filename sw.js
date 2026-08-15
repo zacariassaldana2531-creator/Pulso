@@ -3,6 +3,9 @@ const ARCHIVOS = [
   './',
   './index.html',
   './manifest.json',
+  './landing.html',
+  './privacidad.html',
+  './terminos.html',
   './icono-192.png',
   './icono-512.png'
 ];
