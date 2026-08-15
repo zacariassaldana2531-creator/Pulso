@@ -1924,5 +1924,268 @@ pintarHoy=function(){
 irA('hoy');
 
 </script>
+<script>
+/* =========================================================
+   MÓDULO 3 — semáforo nutricional y explicación de alimentos
+   nom, porción, kcal, P, C, G, saturada, azúcar, sodio(mg), fibra, nivel, explicación, alternativa
+   nivel: 3 verde · 2 amarillo · 1 rojo
+   ========================================================= */
+const ALIM=[
+['Arroz blanco','1 taza',205,4,45,0.4,0.1,0,2,0.6,2,'Carbohidrato refinado: energía rápida pero casi sin fibra, así que el azúcar en sangre sube de golpe. No es dañino, pero acompáñalo siempre con proteína y vegetales.','Arroz integral: misma energía con 4 veces más fibra.'],
+['Arroz integral','1 taza',215,5,45,1.6,0.3,0,5,3.5,3,'La fibra hace que la energía entre lenta y pareja, sin bajones de azúcar. Te llena más y ayuda al intestino.',''],
+['Moro de guandules','1 taza',280,8,48,7,1.8,1,480,7,2,'El guandul aporta fibra y proteína vegetal, eso es bueno. Lo que sube el número es el aceite y la sal del sofrito.','Menos aceite al sofreír baja unas 60 kcal por taza.'],
+['Locrio de pollo','1 taza',320,16,44,9,2.5,1,620,2,2,'Plato completo con buena proteína. El punto flojo es el sodio: casi un tercio de todo lo que deberías consumir en el día.',''],
+['Habichuelas guisadas','1 taza',220,13,38,2,0.5,2,400,11,3,'De lo mejor de la comida dominicana. Once gramos de fibra alimentan las bacterias buenas del intestino y bajan el colesterol. Proteína vegetal de calidad.',''],
+['Plátano maduro frito','1 unidad',200,1,35,8,3.5,14,4,2,2,'El plátano en sí es bueno. El problema es freírlo: absorbe aceite y si ese aceite ya se usó varias veces, se forman compuestos que irritan las arterias.','Plátano maduro al horno: mismo sabor, sin el aceite.'],
+['Tostones','4 unidades',180,1,30,7,3,0,180,2,2,'Fritura de plátano verde. Tiene almidón resistente, que es bueno para el intestino, pero el aceite le suma grasa y calorías.',''],
+['Mangú','1 taza',230,3,42,6,3.5,0,320,3,2,'El plátano hervido es excelente: potasio, fibra y energía lenta. Lo que lo carga es la mantequilla y la cebolla en aceite.','Con menos mantequilla queda en unas 170 kcal.'],
+['Mofongo','1 bola',380,8,45,18,7,0,520,4,1,'Tostón machacado con chicharrón: mucha grasa saturada y mucha sal en una sola porción. Sabroso, pero de vez en cuando.','Mofongo con pollo en vez de chicharrón baja la grasa a la mitad.'],
+['Yuca hervida','1 taza',165,1,39,0.3,0.1,2,14,2,3,'Carbohidrato limpio, sin grasa, fácil de digerir. Buena opción de vívere si no la fríes.',''],
+['Víveres hervidos','1 taza',180,2,42,0.4,0.1,3,20,4,3,'Energía natural con fibra y potasio, cero grasa añadida. De lo más sano del plato dominicano.',''],
+['Batata hervida','1 taza',180,4,41,0.2,0.1,13,72,6,3,'Rica en betacaroteno, que el cuerpo convierte en vitamina A para la vista y la piel. Su azúcar es natural y viene con fibra.',''],
+['Papa hervida','1 taza',135,3,31,0.2,0.1,1,10,3,3,'Buena fuente de potasio, que ayuda a controlar la presión. Hervida está bien; frita cambia la historia.',''],
+['Espagueti guisado','1 taza',320,10,45,11,4,6,780,2,2,'La pasta no es el problema. El sodio sí: casi 800 mg por taza entre el jamón, la salsa y los cubitos.',''],
+['Sancocho','1 plato',350,22,30,16,6,2,900,4,2,'Nutritivo de verdad: proteína, vegetales y víveres. Pero es de los platos con más sal, y el sodio alto sube la presión.','Sácale la grasa que flota antes de servir.'],
+['Sopa de pollo','1 plato',180,14,16,6,1.8,1,850,2,2,'Ligera y con buena proteína. Casi todo el sodio viene del cubito, no del pollo.','Con menos cubito y más vegetales queda excelente.'],
+['Tres golpes','1 plato',650,25,45,38,15,1,1600,3,1,'Aquí está el problema: 15 g de grasa saturada y 1.600 mg de sodio en un solo desayuno, entre el salami, el queso frito y la mantequilla. Eso es casi todo tu límite del día antes de las 9 de la mañana.','Mangú con dos huevos hervidos y aguacate: mismo llenado, la mitad del daño.'],
+['Pechuga a la plancha','100 g',165,31,0,3.6,1,0,74,0,3,'Proteína casi pura y muy poca grasa. Lo mejor para construir músculo sin cargar calorías.',''],
+['Pollo guisado','1 muslo',180,22,3,9,2.5,1,380,0,3,'Buena proteína. El muslo tiene más grasa que la pechuga, pero también más hierro y sabor.',''],
+['Pollo frito','1 presa',320,22,12,20,5,0,650,1,1,'La proteína es buena, pero el empanizado absorbe aceite y la fritura repetida genera grasas trans, las peores para el corazón.','Pollo al horno con la misma sazón: te ahorras unas 130 kcal.'],
+['Res guisada','100 g',230,26,2,13,5.5,0,340,0,2,'Excelente hierro y vitamina B12, importantes contra la anemia. Pero es carne roja con grasa saturada: 2 o 3 veces por semana está bien.',''],
+['Chuleta de cerdo','100 g',240,25,0,15,5,0,380,0,2,'Buena proteína. Quítale el borde de grasa blanca antes de cocinarla y le bajas casi 5 g de saturada.',''],
+['Chicharrón','50 g',270,17,0,22,8,0,690,0,1,'Ocho gramos de grasa saturada en un puñito. La saturada en exceso sube el colesterol LDL, el que se pega en las paredes de las arterias y las va tapando. Sumado a la sal, es de lo más pesado que hay.',''],
+['Salami frito','2 ruedas',150,6,2,13,5,1,720,0,1,'Carne procesada: nitritos, sodio alto y grasa saturada. La OMS asocia el consumo frecuente de carnes procesadas con más riesgo de cáncer de colon. Ocasional, no diario.','Huevo o atún en el desayuno rinde igual sin lo procesado.'],
+['Bacalao guisado','1 taza',230,28,8,10,2,1,1200,1,2,'Proteína de primera y omega-3. El problema es la sal del curado: aunque lo desales, queda bastante.','Déjalo en agua toda la noche cambiando el agua 3 veces.'],
+['Pescado frito','1 porción',280,28,8,15,3,0,420,0,2,'El pescado es buenísimo por su omega-3, que protege el corazón y el cerebro. Freírlo le resta puntos, pero sigue siendo mejor opción que la carne frita.','Al horno o a la plancha conserva todo el omega-3.'],
+['Camarones','100 g',100,24,0,1,0.3,0,220,0,3,'Proteína altísima con casi cero grasa. Tiene colesterol, pero hoy se sabe que el colesterol de la comida afecta mucho menos que la grasa saturada.',''],
+['Atún en agua','1 lata',110,25,0,1,0.3,0,320,0,3,'Proteína barata y práctica, con omega-3. Elige el que viene en agua, no en aceite.',''],
+['Sardina en aceite','1 lata',190,22,0,11,2.5,0,430,0,3,'De los alimentos más completos que existen: omega-3, calcio de las espinas y vitamina D. Escúrrele el aceite.',''],
+['Huevo hervido','1 unidad',72,6,0.4,5,1.6,0,70,0,3,'Proteína de la mejor calidad que existe y colina para el cerebro. Comer uno o dos al día es seguro para la mayoría de la gente.',''],
+['Huevo frito','1 unidad',90,6,0.4,7,2,0,90,0,2,'Mismo huevo, más el aceite. La diferencia es poca si usas poquito aceite.',''],
+['Queso de freír','50 g',180,12,1,14,9,1,620,0,1,'Nueve gramos de grasa saturada y mucha sal en una tajada. Aporta calcio y proteína, pero es de los quesos más pesados.','Queso blanco fresco sin freír: la mitad de la grasa.'],
+['Proteína en polvo','1 scoop',120,24,3,1.5,0.5,1,60,1,3,'Es simplemente proteína de leche concentrada. Útil si no llegas a tu meta con comida, pero no es obligatoria ni mágica.',''],
+['Pan de agua','1 unidad',130,4,25,1,0.2,2,240,1,2,'Harina refinada: sube el azúcar rápido y no llena mucho. Acompáñalo con proteína.','Pan integral: más fibra y te sostiene más tiempo.'],
+['Pan integral','1 rebanada',80,4,14,1,0.2,2,150,2.5,3,'La fibra del grano entero regula el azúcar y ayuda al intestino. Revisa que diga "harina integral" como primer ingrediente.',''],
+['Avena cocida','1 taza',150,5,27,3,0.5,1,5,4,3,'Su fibra beta-glucano está comprobada para bajar el colesterol malo. Uno de los mejores desayunos que puedes hacer.',''],
+['Galletas de soda','4 unidades',60,1,10,2,0.8,1,180,0.4,2,'Casi puro almidón y sal. Llenan poco. Sirven de emergencia, no de costumbre.',''],
+['Leche entera','1 taza',150,8,12,8,4.5,12,105,0,2,'Calcio, proteína y vitamina D. La grasa saturada es lo único a vigilar si tomas varias tazas al día.',''],
+['Leche descremada','1 taza',90,8,12,0.5,0.3,12,105,0,3,'Mismo calcio y misma proteína, sin la grasa saturada. Buena opción si comes bastante grasa en el resto del día.',''],
+['Yogur natural','1 taza',150,12,17,4,2.5,15,110,0,3,'Los probióticos ayudan a la digestión y a las defensas. Elige el natural: el de sabores trae hasta 20 g de azúcar añadida.',''],
+['Café con leche','1 taza',90,3,12,3,1.8,11,50,0,2,'El café en sí tiene antioxidantes y es sano. Lo que suma es el azúcar.','Bájale de a poquito la cucharada; en dos semanas ni lo notas.'],
+['Café negro','1 taza',5,0,1,0,0,0,5,0,3,'Prácticamente cero calorías, con antioxidantes y cafeína que mejora el rendimiento en el entrenamiento.',''],
+['Morir soñando','1 vaso',180,4,35,3,1.8,32,60,0.3,1,'Tiene vitamina C, pero 32 g de azúcar es como ocho cucharaditas de una sola vez. El azúcar líquido entra rapidísimo a la sangre y no llena nada.','Jugo de china natural sin azúcar y aparte un vaso de leche.'],
+['Jugo natural sin azúcar','1 vaso',110,2,26,0.3,0.1,20,8,1,2,'Mejor que el refresco, pero al exprimir se pierde la fibra y queda el azúcar de la fruta suelta.','La fruta entera te llena más y sube menos el azúcar.'],
+['Jugo de chinola','1 vaso',130,1,32,0,0,28,10,1,2,'Buena vitamina C. Casi siempre se le echa bastante azúcar para cortar el ácido.',''],
+['Refresco','1 lata',140,0,39,0,0,39,45,0,1,'Casi diez cucharaditas de azúcar y cero nutrientes. Consumido a diario se asocia con hígado graso, diabetes tipo 2 y aumento de grasa abdominal.','Agua con limón o refresco de dieta si necesitas la costumbre.'],
+['Cerveza','1 botella',150,1,13,0,0,0,14,0,1,'El alcohol frena la recuperación muscular, empeora el sueño y aporta calorías que no llenan. Con moderación no pasa nada, pero no ayuda a tus metas.',''],
+['Agua','1 vaso',0,0,0,0,0,0,0,0,3,'Sin agua suficiente rindes menos, te dan calambres y confundes sed con hambre. Es lo más barato que puedes hacer por tu salud.',''],
+['Guineo','1 unidad',105,1,27,0.4,0.1,14,1,3,3,'Potasio para el músculo y el corazón, más fibra. Perfecto antes de entrenar.',''],
+['Manzana','1 unidad',95,0.5,25,0.3,0.1,19,2,4,3,'Su fibra pectina alimenta el intestino y ayuda a controlar el colesterol. Cómela con concha.',''],
+['Naranja','1 unidad',62,1,15,0.2,0,12,0,3,3,'Vitamina C para las defensas, más fibra. Entera es mucho mejor que en jugo.',''],
+['Lechosa','1 taza',60,1,15,0.2,0,11,12,2.5,3,'Tiene papaína, una enzima que ayuda a digerir. Muy pocas calorías y buena vitamina A.',''],
+['Piña','1 taza',82,1,22,0.2,0,16,2,2,3,'La bromelina ayuda a bajar la inflamación. Refrescante y baja en calorías.',''],
+['Mango','1 unidad',200,3,50,1,0.2,45,5,5,2,'Fruta excelente, pero uno grande trae bastante azúcar natural. Media unidad es una porción más pareja.',''],
+['Aguacate','media unidad',160,2,9,15,2,1,7,7,3,'Grasa monoinsaturada, la misma del aceite de oliva: baja el colesterol malo y sube el bueno. Aunque sea alto en calorías, es grasa que tu corazón agradece.',''],
+['Ensalada verde','1 taza',25,1,5,0.2,0,2,15,2,3,'Volumen y fibra por casi cero calorías. Llena el estómago y aporta vitaminas.',''],
+['Ensalada de repollo','1 taza',60,1,7,3,0.5,4,180,2,3,'El repollo es excelente. Cuidado solo con la mayonesa, que es la que sube las calorías.',''],
+['Maíz','1 taza',145,5,31,2,0.3,6,25,4,3,'Grano entero con fibra y antioxidantes buenos para la vista.',''],
+['Maní','30 g',170,7,6,14,2,1,5,2.5,3,'Grasa buena, proteína y magnesio. La porción es un puño cerrado; es fácil pasarse.','Que sea sin sal y sin caramelo.'],
+['Aceite','1 cucharada',120,0,0,14,2,0,0,0,2,'Necesitas algo de grasa para absorber vitaminas. Lo que importa es cuál: oliva y aguacate son las mejores, el de coco es casi toda saturada.','Aceite de oliva para lo que no se calienta mucho.'],
+['Mantequilla','1 cucharada',100,0,0,11,7,0,90,0,1,'Siete gramos de saturada en una cucharada. En pequeñas cantidades no pasa nada; el problema es la cucharada generosa de todos los días.','Aceite de oliva o aguacate machacado en el pan.'],
+['Empanada','1 unidad',250,8,25,13,5,1,480,1,1,'Masa refinada frita. Combina harina, aceite y sal, tres cosas que juntas engordan fácil y sostienen poco.',''],
+['Quipe','1 unidad',180,8,12,11,4,0,390,2,2,'Al menos trae trigo y carne, así que tiene algo de fibra y proteína. Sigue siendo frito.',''],
+['Pastelito','1 unidad',200,6,20,11,4.5,1,420,1,1,'Frito y de harina refinada. Cae bien de vez en cuando, pero no llena y suma rápido.',''],
+['Arepa dulce','1 porción',300,4,45,12,7,28,180,2,1,'Azúcar, leche de coco y harina: sube el azúcar en sangre de golpe y trae bastante saturada del coco.',''],
+['Habichuela con dulce','1 taza',280,6,48,8,5,35,120,5,2,'La habichuela aporta fibra y proteína, eso está bien. Lo pesado es el azúcar y la leche de coco. Es postre, trátalo como postre.',''],
+['Chocolate','30 g',160,2,17,9,5.5,15,10,2,2,'El chocolate oscuro de 70% o más tiene antioxidantes buenos para la presión. El de leche es más azúcar que cacao.','Busca 70% de cacao o más.'],
+['Helado','1 bola',140,2,17,7,4.5,16,50,0,2,'Azúcar y grasa saturada juntas. Una bola de vez en cuando no arruina nada.',''],
+['Pizza','1 pedazo',285,12,36,10,4.5,4,640,2,2,'Tiene su proteína y calcio del queso. El asunto es el sodio y que nadie se come un solo pedazo.',''],
+['Hamburguesa','1 unidad',400,20,35,20,8,7,900,2,1,'Ocho gramos de saturada y 900 mg de sodio. La carne aporta hierro y proteína, pero el conjunto es pesado para el corazón.','Hecha en casa con pan integral y carne magra baja casi la mitad.'],
+['Papas fritas','porción mediana',340,4,44,16,3,0,270,4,1,'Freír papa a alta temperatura produce acrilamida, un compuesto que se estudia como posible cancerígeno. Además casi no tiene proteína.','Papa al horno con un chorrito de aceite queda parecida.']
+];
+
+/* límites diarios de referencia (adulto sano) */
+const LIM={sat:22,az:50,so:2300,fi:28};
+const NIVCOL={3:'#00CC6A',2:'#FFB020',1:'#FF4D6D'};
+const NIVTXT={3:'Buena opción',2:'Con moderación',1:'Ocasional'};
+
+const est3=document.createElement('style');
+est3.textContent=`
+.comida{width:100%;text-align:left}
+.comida .crece{overflow:hidden}
+.comida b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kcal{flex:0 0 auto;margin-left:auto}
+.semaforo{width:12px;height:12px;border-radius:50%;flex:0 0 auto}
+.nivchip{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:100px;font-size:13px;font-weight:700;color:#fff;margin-bottom:14px}
+.dr{background:var(--blanco);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sombra);margin-bottom:14px;font-size:14.8px;line-height:1.55}
+.dr h4{font-family:var(--disp);font-weight:800;font-size:15px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.nutri{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.nfila{display:flex;align-items:center;gap:11px;font-size:13.5px}
+.nfila .et{width:120px;flex:0 0 auto;color:var(--tenue);font-weight:600;font-size:12.5px}
+.nfila .bb{flex:1;height:8px;border-radius:4px;background:var(--fondo);overflow:hidden}
+.nfila .bb i{display:block;height:100%;border-radius:4px}
+.nfila .vv{width:74px;text-align:right;font-family:var(--disp);font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums}
+.swap{background:linear-gradient(135deg,#00C2A8,#2E7DFF);color:#fff;border-radius:16px;padding:14px 16px;font-size:14.3px;line-height:1.5;margin-bottom:14px}
+.swap b{display:block;font-family:var(--disp);font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;opacity:.95}
+.diario{background:var(--blanco);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sombra);margin:14px 0}
+.diario h4{font-family:var(--disp);font-weight:800;font-size:17px;margin:0 0 10px}
+.veredicto{display:flex;gap:10px;align-items:flex-start;font-size:14.3px;line-height:1.5;padding:11px 0;border-top:1px solid var(--linea)}
+.veredicto:first-of-type{border-top:none}
+.veredicto .ic{font-size:17px;flex:0 0 auto;line-height:1.3}
+`;
+document.head.appendChild(est3);
+
+/* ---------- ficha del alimento ---------- */
+function fichaAlimento(a,onAdd){
+  const [nom,por,k,p,c,g,sat,az,so,fi,niv,nota,alt]=a;
+  $('#infoTitulo').textContent=nom;
+  const cc=$('#infoCuerpo');cc.innerHTML='';
+  const col=NIVCOL[niv];
+  cc.appendChild(el('div','nivchip','<span style="width:9px;height:9px;border-radius:50%;background:#fff"></span>'+NIVTXT[niv])).style.background=col;
+  cc.appendChild(el('div','vacio','Porción de referencia: '+por+' · '+k+' kcal')).style.padding='0 0 10px';
+  const bar=(et,v,lim,color,uni)=>'<div class="nfila"><div class="et">'+et+'</div><div class="bb"><i style="width:'+Math.min(100,v/lim*100)+'%;background:'+color+'"></i></div><div class="vv">'+v+uni+'</div></div>';
+  const n=el('div','nutri');
+  n.innerHTML=bar('Proteína',p,50,'#00CC6A',' g')+
+    bar('Carbohidratos',c,120,'#FFB020',' g')+
+    bar('Grasa total',g,40,'#7B5CFF',' g')+
+    bar('Grasa saturada',sat,LIM.sat,sat>=5?'#FF4D6D':'#FFB020',' g')+
+    bar('Azúcar',az,LIM.az,az>=20?'#FF4D6D':'#FFB020',' g')+
+    bar('Sodio (sal)',so,LIM.so,so>=600?'#FF4D6D':'#FFB020',' mg')+
+    bar('Fibra',fi,LIM.fi,'#00C2A8',' g');
+  cc.appendChild(n);
+  cc.appendChild(el('div','dr','<h4>🩺 Qué le hace a tu cuerpo</h4>'+nota));
+  const detalles=[];
+  if(sat>=5)detalles.push('Cubre el '+Math.round(sat/LIM.sat*100)+'% de la grasa saturada que deberías comer en todo el día.');
+  if(az>=20)detalles.push('Trae el equivalente a '+Math.round(az/4)+' cucharaditas de azúcar.');
+  if(so>=600)detalles.push('Aporta el '+Math.round(so/LIM.so*100)+'% del sodio de tu día. El sodio alto sube la presión arterial.');
+  if(p>=20)detalles.push('Con '+p+' g de proteína ayuda directo a reparar el músculo después de entrenar.');
+  if(fi>=5)detalles.push('Sus '+fi+' g de fibra te llenan más y regulan la digestión.');
+  if(detalles.length)cc.appendChild(el('div','dr','<h4>📊 En números claros</h4>'+detalles.map(d=>'• '+d).join('<br>')));
+  if(alt)cc.appendChild(el('div','swap','<b>Cámbialo por esto</b>'+alt));
+  const b=el('button','btn','Agregar a mi día');
+  b.onclick=()=>onAdd(a);
+  cc.appendChild(b);
+  cc.appendChild(el('div','aviso-salud','Ningún alimento está prohibido. Lo que define tu salud es lo que comes casi siempre, no lo que comes de vez en cuando.'));
+  abrir('#capaInfo');
+}
+
+/* ---------- lista de alimentos con semáforo ---------- */
+let filtroNiv=0;
+abrirAlimentos=function(){
+  $('#infoTitulo').textContent='Agregar comida';
+  const cc=$('#infoCuerpo');cc.innerHTML='';
+  const inp=document.createElement('input');
+  inp.className='buscar';inp.placeholder='Buscar alimento';
+  const chips=el('div','chips');
+  const cont=el('div');
+  const agregar=a=>{
+    const n=parseFloat(prompt('¿Cuántas porciones de '+a[0]+'? ('+a[1]+')','1'));
+    if(!(n>0&&n<=20))return;
+    const f=hoyClave(),d=comidas[f]||{items:[],agua:0};
+    d.items.push({nom:a[0],por:a[1],n:n,k:a[2],p:a[3],c:a[4],g:a[5],sat:a[6],az:a[7],so:a[8],fi:a[9],niv:a[10]});
+    comidas[f]=d;grabar(KD.c,comidas);cerrar('#capaInfo');pintarDieta();avisar(a[0]+' agregado');
+  };
+  const pinta=()=>{
+    cont.innerHTML='';
+    const q=inp.value.toLowerCase().trim();
+    const l=ALIM.filter(a=>(!q||a[0].toLowerCase().includes(q))&&(!filtroNiv||a[10]===filtroNiv));
+    if(!l.length)cont.appendChild(el('div','vacio','No está en la lista. Busca algo parecido.'));
+    l.forEach(a=>{
+      const r=el('button','comida');
+      r.innerHTML='<span class="semaforo" style="background:'+NIVCOL[a[10]]+'"></span>'+
+        '<div class="crece"><b>'+a[0]+'</b><small>'+a[1]+' · '+a[3]+'P '+a[4]+'C '+a[5]+'G · '+NIVTXT[a[10]]+'</small></div>'+
+        '<div class="kcal">'+a[2]+'</div>';
+      r.onclick=()=>fichaAlimento(a,agregar);
+      cont.appendChild(r);
+    });
+  };
+  [[0,'Todos','#171340'],[3,'Buenas','#00CC6A'],[2,'Moderadas','#FFB020'],[1,'Ocasionales','#FF4D6D']].forEach(([v,t,col])=>{
+    const b=el('button','chip'+(filtroNiv===v?' on':''),t);
+    b.style.setProperty('--c',col);
+    b.onclick=()=>{filtroNiv=v;[...chips.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');pinta()};
+    chips.appendChild(b);
+  });
+  inp.oninput=pinta;
+  cc.appendChild(inp);cc.appendChild(chips);cc.appendChild(cont);pinta();
+  abrir('#capaInfo');
+};
+
+/* ---------- análisis del día ---------- */
+function analisisDia(){
+  const f=hoyClave(),l=comidas[f]||{items:[]};
+  const t={sat:0,az:0,so:0,fi:0,p:0,k:0};
+  l.items.forEach(i=>{t.sat+=(i.sat||0)*i.n;t.az+=(i.az||0)*i.n;t.so+=(i.so||0)*i.n;
+    t.fi+=(i.fi||0)*i.n;t.p+=i.p*i.n;t.k+=i.k*i.n});
+  const v=[];
+  const plan=perfil?calcularPlan(perfil):null;
+  if(!l.items.length)return null;
+  v.push(t.sat>LIM.sat
+    ? ['⚠️','Grasa saturada alta: '+Math.round(t.sat)+' g cuando el límite ronda los '+LIM.sat+' g. Mantenida en el tiempo sube el colesterol LDL, que estrecha las arterias.']
+    : ['✅','Grasa saturada bajo control: '+Math.round(t.sat)+' g de un límite de '+LIM.sat+' g.']);
+  v.push(t.az>LIM.az
+    ? ['⚠️','Azúcar alta: '+Math.round(t.az)+' g, como '+Math.round(t.az/4)+' cucharaditas. El exceso repetido lleva a hígado graso y resistencia a la insulina.']
+    : ['✅','Azúcar en buen rango: '+Math.round(t.az)+' g.']);
+  v.push(t.so>LIM.so
+    ? ['⚠️','Sodio alto: '+Math.round(t.so)+' mg. Sobre 2.300 mg al día sube la presión arterial con el tiempo.']
+    : ['✅','Sodio controlado: '+Math.round(t.so)+' mg de '+LIM.so+' mg.']);
+  v.push(t.fi<LIM.fi
+    ? ['🥬','Te falta fibra: llevas '+Math.round(t.fi)+' g de los '+LIM.fi+' g recomendados. Habichuelas, víveres y frutas enteras la suben rápido.']
+    : ['✅','Buena fibra: '+Math.round(t.fi)+' g. Tu intestino y tu colesterol lo agradecen.']);
+  if(plan)v.push(t.p<plan.prot*0.8
+    ? ['🍗','Vas corto de proteína: '+Math.round(t.p)+' g de '+plan.prot+' g. Sin suficiente proteína el músculo que ganas entrenando no se sostiene.']
+    : ['✅','Proteína cumplida: '+Math.round(t.p)+' g de '+plan.prot+' g.']);
+  return v;
+}
+const dietaPrev=pintarDieta;
+pintarDieta=function(){
+  dietaPrev();
+  if(!perfil)return;
+  const v=analisisDia();if(!v)return;
+  const d=el('div','diario','<h4>🩺 Análisis de tu día</h4>'+
+    v.map(([i,t])=>'<div class="veredicto"><span class="ic">'+i+'</span><span>'+t+'</span></div>').join(''));
+  const ancla=$('#v-dieta').querySelector('.agua');
+  const cont=ancla?ancla.closest('.tarjeta'):null;
+  if(cont)cont.parentNode.insertBefore(d,cont);else $('#v-dieta').appendChild(d);
+};
+
+/* ---------- guía de alimentación ---------- */
+const GNUT=[
+ ['Grasa saturada','Pecho','<p>Es la grasa que se pone dura en la nevera: la del chicharrón, el queso frito, la mantequilla, el salami.</p><p><b>Qué hace:</b> sube el colesterol LDL, el que se va pegando en las paredes de las arterias. Con los años eso las estrecha y es la causa principal de infartos y derrames.</p><p><b>Límite:</b> unos 22 g al día. Un plato de tres golpes trae 15 g.</p>'],
+ ['Grasa buena','Cardio','<p>Aguacate, maní, aceite de oliva, sardina, pescado azul.</p><p><b>Qué hace:</b> baja el colesterol malo, sube el bueno y reduce inflamación. El omega-3 del pescado además protege el cerebro.</p><p>No le tengas miedo a la grasa; ténle miedo a la grasa <b>equivocada</b>.</p>'],
+ ['Azúcar','Bíceps','<p>La que preocupa es la añadida: refresco, jugo endulzado, dulces, morir soñando.</p><p><b>Qué hace:</b> entra rápido a la sangre, el páncreas dispara insulina y lo que no usas se guarda como grasa, sobre todo en la barriga y el hígado. Repetido por años lleva a diabetes tipo 2.</p><p><b>Límite:</b> unos 50 g al día. Una lata de refresco trae 39 g.</p>'],
+ ['Sodio (la sal)','Piernas','<p>Cubitos, sopas de sobre, embutidos, comida de la calle.</p><p><b>Qué hace:</b> retiene agua y sube la presión arterial. La presión alta no duele ni avisa: por eso le dicen el asesino silencioso.</p><p><b>Límite:</b> 2.300 mg al día, y menos si ya tienes la presión alta.</p>'],
+ ['Fibra','Core','<p>Habichuelas, víveres, avena, frutas con concha, vegetales.</p><p><b>Qué hace:</b> te llena sin calorías, hace que el azúcar entre despacio, alimenta las bacterias buenas del intestino y arrastra parte del colesterol.</p><p><b>Meta:</b> unos 28 g al día. Una taza de habichuelas ya te da 11 g.</p>'],
+ ['Proteína','Espalda','<p>Pollo, huevo, pescado, carne, habichuelas, lácteos.</p><p><b>Qué hace:</b> es el material con el que se reparan y crecen los músculos. Si entrenas y no comes suficiente, no ves resultados por más que te esfuerces. Además es lo que más llena.</p><p><b>Meta:</b> entre 1,6 y 2 g por cada kilo de tu peso.</p>'],
+ ['Ultraprocesados','Tríceps','<p>Salami, embutidos, galletas de paquete, frituras de bolsa, refrescos.</p><p><b>Qué hace:</b> combinan azúcar, grasa y sal en proporciones que el cerebro no sabe frenar, así que comes de más sin notarlo. Las carnes procesadas están asociadas con más riesgo de cáncer de colon.</p>'],
+ ['Cómo leer una etiqueta','Hombros','<ul><li>Mira siempre la <b>porción</b> primero: muchas veces el paquete trae 3 porciones</li><li>Grasa saturada: mientras más cerca de 0, mejor</li><li>Azúcares añadidos: busca menos de 5 g por porción</li><li>Sodio: menos de 400 mg por porción</li><li>Fibra: más de 3 g es buena señal</li><li>Si la lista de ingredientes es larguísima y no reconoces la mitad, es ultraprocesado</li></ul>']
+];
+function abrirGuiaNutri(){
+  $('#infoTitulo').textContent='Entiende lo que comes';
+  const cc=$('#infoCuerpo');cc.innerHTML='';
+  const h=el('div','rut-tarjeta');pintaColor(h,'Cardio');
+  h.innerHTML='<h3>Explicado sencillo</h3><p>Qué es cada cosa que aparece en la etiqueta y qué le hace a tu cuerpo de verdad.</p>';
+  cc.appendChild(h);
+  GNUT.forEach(([t,gr,html])=>{
+    const s=el('div','gsec','<h4>'+t+'</h4>'+html);
+    s.style.setProperty('--c',cg(gr));cc.appendChild(s);
+  });
+  cc.appendChild(el('div','aviso-salud','Esto es información general de educación en salud. No sustituye a un médico ni a un nutricionista, sobre todo si tienes diabetes, presión alta, problemas de riñón o estás embarazada.'));
+  abrir('#capaInfo');
+}
+const dietaPrev2=pintarDieta;
+pintarDieta=function(){
+  dietaPrev2();
+  const b=el('button','guia-btn');
+  b.style.background='linear-gradient(135deg,#FF8A3D,#FFB020)';
+  b.style.boxShadow='0 10px 26px -10px rgba(255,138,61,.8)';
+  b.innerHTML='<span class="em">🩺</span><span class="crece"><b>Entiende lo que comes</b><small>Grasa saturada, azúcar, sodio y fibra, explicados</small></span><span>›</span>';
+  b.onclick=abrirGuiaNutri;
+  const v=$('#v-dieta');
+  const ref=v.querySelector('.anillo')||v.querySelector('.rut-tarjeta');
+  if(ref)v.insertBefore(b,ref);else v.appendChild(b);
+};
+if($('#v-dieta').classList.contains('on'))pintarDieta();
+
+</script>
 </body>
 </html>
