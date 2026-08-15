@@ -2,7 +2,7 @@
   "name": "PULSO — Entrena y mide tu progreso",
   "short_name": "PULSO",
   "description": "Registra tus entrenamientos de gym y de casa: rutinas, series, descansos y progreso.",
-  "start_url": "./index.html",
+  "start_url": "./app.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
