@@ -3524,5 +3524,458 @@ if(onb&&onb.meta&&!onbProg.resp.objetivo){
 pintarHoy();
 
 </script>
+<script>
+/* =========================================================
+   MÓDULO 12 — sugerir alimentos y enviar mensajes
+   ========================================================= */
+
+/* ⚠️ CAMBIA ESTOS DOS DATOS POR LOS TUYOS ⚠️ */
+const CONTACTO={
+  correo:'tucorreo@ejemplo.com',      // ← pon aquí tu correo
+  whatsapp:'18091234567'              // ← tu número con código de país, sin + ni espacios
+};
+
+const KM={a:'pulso.misalimentos'};
+let misAlimentos=leer(KM.a,[]);
+/* los alimentos propios entran a la búsqueda como cualquier otro */
+if(typeof ALIM!=='undefined'&&misAlimentos.length){
+  misAlimentos.forEach(a=>{if(!ALIM.some(x=>x[0]===a[0]))ALIM.push(a)});
+  ALIM.sort((a,b)=>a[0].localeCompare(b[0],'es'));
+}
+
+const est12=document.createElement('style');
+est12.textContent=`
+.sug-caja{background:var(--blanco);border-radius:var(--r);padding:18px;box-shadow:var(--sombra);margin-bottom:14px}
+.sug-caja h4{font-family:var(--disp);font-weight:800;font-size:16px;margin:0 0 6px}
+.sug-caja p{font-size:14.3px;line-height:1.5;color:#4A4478;margin:0}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.dos .campo{margin-bottom:0}
+.mio{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:#EDE9FF;color:#5A44C4;padding:4px 9px;border-radius:100px;flex:0 0 auto}
+.env{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+.env button{padding:15px 10px;border-radius:100px;font-family:var(--disp);font-weight:700;font-size:14.5px;color:#fff}
+.env .mail{background:linear-gradient(135deg,#7B5CFF,#2E7DFF)}
+.env .wa{background:linear-gradient(135deg,#00CC6A,#00C2A8)}
+`;
+document.head.appendChild(est12);
+
+function enviarTexto(asunto,cuerpo){
+  return {
+    correo:()=>location.href='mailto:'+CONTACTO.correo+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo),
+    whatsapp:()=>window.open('https://wa.me/'+CONTACTO.whatsapp+'?text='+encodeURIComponent(asunto+'\n\n'+cuerpo),'_blank'),
+    copiar:()=>{navigator.clipboard&&navigator.clipboard.writeText(asunto+'\n\n'+cuerpo);avisar('Copiado al portapapeles')}
+  };
+}
+
+/* ---------------- sugerir un alimento ---------------- */
+function abrirSugerirAlimento(){
+  $('#infoTitulo').textContent='Sugerir un alimento';
+  const c=$('#infoCuerpo');c.innerHTML='';
+  c.appendChild(el('div','sug-caja','<h4>🍽 ¿Falta algo que tú comes?</h4><p>Dinos cuál es y lo agregamos a la app para todo el mundo. Además queda guardado en tu lista de una vez, así lo puedes usar desde hoy.</p>'));
+  c.appendChild(el('div','campo','<label class="etq">¿Qué comida es? *</label><input id="sg-nom" placeholder="Ej. Arepa de queso" autocomplete="off">'));
+  c.appendChild(el('div','campo','<label class="etq">Porción normal *</label><input id="sg-por" placeholder="Ej. 1 unidad, 1 taza, 100 g" autocomplete="off">'));
+  c.appendChild(el('div','sug-caja','<h4>Si sabes los valores, ponlos</h4><p>Están en la etiqueta del producto. Si no los sabes, déjalos vacíos: nosotros los buscamos.</p>'));
+  const g1=el('div','dos');
+  g1.innerHTML='<div class="campo"><label class="etq">Calorías</label><input id="sg-k" type="number" inputmode="numeric" placeholder="kcal"></div>'+
+               '<div class="campo"><label class="etq">Proteína (g)</label><input id="sg-p" type="number" inputmode="decimal" placeholder="g"></div>';
+  c.appendChild(g1);
+  const g2=el('div','dos');g2.style.marginTop='9px';
+  g2.innerHTML='<div class="campo"><label class="etq">Carbohidratos (g)</label><input id="sg-c" type="number" inputmode="decimal" placeholder="g"></div>'+
+               '<div class="campo"><label class="etq">Grasa (g)</label><input id="sg-g" type="number" inputmode="decimal" placeholder="g"></div>';
+  c.appendChild(g2);
+  const g3=el('div','dos');g3.style.marginTop='9px';
+  g3.innerHTML='<div class="campo"><label class="etq">Grasa saturada (g)</label><input id="sg-sat" type="number" inputmode="decimal" placeholder="g"></div>'+
+               '<div class="campo"><label class="etq">Azúcar (g)</label><input id="sg-az" type="number" inputmode="decimal" placeholder="g"></div>';
+  c.appendChild(g3);
+  c.appendChild(el('div','campo','<label class="etq">¿De dónde es? (opcional)</label><input id="sg-pais" placeholder="Ej. Colombia, Japón, España" autocomplete="off">'));
+  c.appendChild(el('div','campo','<label class="etq">Algo más que debamos saber</label><input id="sg-nota" placeholder="Cómo se prepara, marca, etc." autocomplete="off">'));
+
+  const val=()=>{
+    const v=x=>$(x).value.trim();
+    const n=x=>parseFloat($(x).value)||0;
+    if(!v('#sg-nom')||!v('#sg-por')){avisar('Pon al menos el nombre y la porción');return null}
+    return {nom:v('#sg-nom'),por:v('#sg-por'),k:n('#sg-k'),p:n('#sg-p'),c:n('#sg-c'),
+      g:n('#sg-g'),sat:n('#sg-sat'),az:n('#sg-az'),pais:v('#sg-pais'),nota:v('#sg-nota')};
+  };
+
+  const guardar=el('button','btn','Guardar en mi lista');
+  guardar.onclick=()=>{
+    const d=val();if(!d)return;
+    if(!d.k){avisar('Para guardarlo necesitas al menos las calorías');return}
+    const niv=nivelPor100({sat:d.sat,az:d.az,so:0,fi:0,p:d.p});
+    const fila=[d.nom,d.por,Math.round(d.k),d.p,d.c,d.g,d.sat,d.az,0,0,niv,
+      'Alimento que agregaste tú. Los valores son los que escribiste, así que revísalos si algo no cuadra.'+(d.nota?' Nota: '+d.nota:''),''];
+    misAlimentos.push(fila);grabar(KM.a,misAlimentos);
+    if(!ALIM.some(x=>x[0]===fila[0])){ALIM.push(fila);ALIM.sort((a,b)=>a[0].localeCompare(b[0],'es'))}
+    cerrar('#capaInfo');avisar('"'+d.nom+'" ya está en tu lista');
+  };
+  c.appendChild(guardar);
+
+  c.appendChild(el('div','etq','Enviarnos la sugerencia'));
+  const env=el('div','env');
+  const mail=el('button','mail','✉️  Correo'),wa=el('button','wa','💬  WhatsApp');
+  const armar=()=>{
+    const d=val();if(!d)return null;
+    const l=['SUGERENCIA DE ALIMENTO','','Nombre: '+d.nom,'Porción: '+d.por];
+    if(d.k)l.push('Calorías: '+d.k);
+    if(d.p)l.push('Proteína: '+d.p+' g');
+    if(d.c)l.push('Carbohidratos: '+d.c+' g');
+    if(d.g)l.push('Grasa: '+d.g+' g');
+    if(d.sat)l.push('Grasa saturada: '+d.sat+' g');
+    if(d.az)l.push('Azúcar: '+d.az+' g');
+    if(d.pais)l.push('País: '+d.pais);
+    if(d.nota)l.push('Nota: '+d.nota);
+    return {a:'PULSO — Sugerencia: '+d.nom,b:l.join('\n')};
+  };
+  mail.onclick=()=>{const m=armar();if(m)enviarTexto(m.a,m.b).correo()};
+  wa.onclick=()=>{const m=armar();if(m)enviarTexto(m.a,m.b).whatsapp()};
+  env.appendChild(mail);env.appendChild(wa);
+  c.appendChild(env);
+  const cop=el('button','btn fantasma','Copiar el texto');
+  cop.onclick=()=>{const m=armar();if(m)enviarTexto(m.a,m.b).copiar()};
+  c.appendChild(cop);
+  c.appendChild(el('div','vacio','No enviamos nada automáticamente: se abre tu app de correo o WhatsApp para que tú lo mandes.'));
+  abrir('#capaInfo');
+}
+
+/* ---------------- mis alimentos guardados ---------------- */
+function abrirMisAlimentos(){
+  $('#infoTitulo').textContent='Mis alimentos';
+  const c=$('#infoCuerpo');c.innerHTML='';
+  if(!misAlimentos.length){
+    c.appendChild(el('div','vacio','Todavía no has agregado ninguno.<br>Los que agregues aparecen en la búsqueda junto a los demás.'));
+  }
+  misAlimentos.forEach((a,i)=>{
+    const r=el('div','comida');
+    r.innerHTML='<span class="semaforo" style="background:'+NIVCOL[a[10]]+'"></span>'+
+      '<div class="crece"><b>'+a[0]+'</b><small>'+a[1]+' · '+a[3]+'P '+a[4]+'C '+a[5]+'G</small></div>'+
+      '<span class="mio">Mío</span><div class="kcal">'+a[2]+'</div>';
+    const x=el('button','quitar','✕');
+    x.onclick=()=>{
+      if(!confirm('¿Borrar "'+a[0]+'" de tu lista?'))return;
+      const nom=a[0];
+      misAlimentos.splice(i,1);grabar(KM.a,misAlimentos);
+      const j=ALIM.findIndex(y=>y[0]===nom);if(j>=0)ALIM.splice(j,1);
+      abrirMisAlimentos();
+    };
+    r.appendChild(x);c.appendChild(r);
+  });
+  const b=el('button','btn','+ Sugerir un alimento');
+  b.onclick=()=>{cerrar('#capaInfo');setTimeout(abrirSugerirAlimento,280)};
+  c.appendChild(b);
+  abrir('#capaInfo');
+}
+
+/* ---------------- mensaje general ---------------- */
+function abrirMensaje(){
+  $('#infoTitulo').textContent='Escríbenos';
+  const c=$('#infoCuerpo');c.innerHTML='';
+  c.appendChild(el('div','sug-caja','<h4>💬 Cuéntanos</h4><p>Una idea, un error que encontraste, un ejercicio que falta o cualquier cosa que mejorarías. Se lee todo.</p>'));
+  const tipos=[['idea','💡 Tengo una idea'],['error','🐞 Encontré un error'],['ejercicio','🏋️ Falta un ejercicio'],['comida','🍎 Falta una comida'],['otro','✍️ Otra cosa']];
+  let tipo='idea';
+  c.appendChild(el('div','etq','¿De qué se trata?'));
+  const ch=el('div');ch.style.marginBottom='14px';
+  tipos.forEach(([v,t])=>{
+    const b=el('button','tarjeta',t);
+    b.style.padding='13px 15px';b.style.marginBottom='7px';
+    if(v===tipo)b.style.outline='2px solid var(--espalda)';
+    b.onclick=()=>{tipo=v;[...ch.children].forEach(x=>x.style.outline='none');b.style.outline='2px solid var(--espalda)';
+      if(v==='comida'){cerrar('#capaInfo');setTimeout(abrirSugerirAlimento,280)}};
+    ch.appendChild(b);
+  });
+  c.appendChild(ch);
+  const ta=document.createElement('textarea');
+  ta.placeholder='Escribe aquí tu mensaje…';
+  ta.style.cssText='width:100%;min-height:130px;background:var(--blanco);border:none;border-radius:18px;padding:16px;font-size:16px;font-family:inherit;line-height:1.5;box-shadow:var(--sombra);resize:vertical';
+  c.appendChild(ta);
+  const armar=()=>{
+    const t=ta.value.trim();
+    if(!t){avisar('Escribe tu mensaje primero');return null}
+    const et=tipos.find(x=>x[0]===tipo)[1].replace(/^\S+\s/,'');
+    return {a:'PULSO — '+et,b:t+'\n\n---\nTipo: '+et};
+  };
+  const env=el('div','env');
+  const mail=el('button','mail','✉️  Correo'),wa=el('button','wa','💬  WhatsApp');
+  mail.onclick=()=>{const m=armar();if(m)enviarTexto(m.a,m.b).correo()};
+  wa.onclick=()=>{const m=armar();if(m)enviarTexto(m.a,m.b).whatsapp()};
+  env.appendChild(mail);env.appendChild(wa);
+  c.appendChild(env);
+  abrir('#capaInfo');
+}
+
+/* ---------------- accesos ---------------- */
+const dietaPrev12=pintarDieta;
+pintarDieta=function(){
+  dietaPrev12();
+  const v=$('#v-dieta');
+  const b=el('button','guia-btn');
+  b.style.background='linear-gradient(135deg,#7B5CFF,#FF5FA2)';
+  b.style.boxShadow='0 10px 26px -10px rgba(123,92,255,.8)';
+  b.innerHTML='<span class="em">🍽</span><span class="crece"><b>¿Falta una comida?</b><small>Sugiérela y la agregamos'+(misAlimentos.length?' · tienes '+misAlimentos.length+' propios':'')+'</small></span><span>›</span>';
+  b.onclick=()=>misAlimentos.length?abrirMisAlimentos():abrirSugerirAlimento();
+  v.appendChild(b);
+};
+const aj12=$('#btnAjustes'),aj12Orig=aj12.onclick;
+aj12.onclick=function(){
+  aj12Orig.call(this);
+  const c=$('#infoCuerpo');
+  const b=el('button','btn fantasma','💬  Escríbenos una sugerencia');
+  b.onclick=abrirMensaje;
+  const sep=c.querySelector('hr.sep');
+  if(sep)c.insertBefore(b,sep);else c.appendChild(b);
+};
+pintarDieta();
+
+</script>
+<script>
+/* =========================================================
+   MÓDULO 13 — investigación automática del alimento
+   Busca en Open Food Facts, rellena los valores y redacta
+   la explicación con el mismo criterio que los demás.
+   ========================================================= */
+const est13=document.createElement('style');
+est13.textContent=`
+.buscando{display:flex;align-items:center;gap:11px;background:var(--blanco);border-radius:16px;padding:14px 16px;box-shadow:var(--sombra);margin-bottom:10px;font-size:14.3px;color:var(--tenue)}
+.spin{width:19px;height:19px;border:3px solid var(--linea);border-top-color:var(--espalda);border-radius:50%;animation:gira .8s linear infinite;flex:0 0 auto}
+@keyframes gira{to{transform:rotate(360deg)}}
+.match{display:flex;align-items:center;gap:11px;background:var(--blanco);border-radius:16px;padding:13px 15px;margin-bottom:8px;box-shadow:0 3px 12px rgba(23,19,64,.05);width:100%;text-align:left}
+.match b{font-size:15px;font-weight:600;display:block;line-height:1.25}
+.match small{color:var(--tenue);font-size:12.3px}
+.hallado{background:linear-gradient(135deg,#00CC6A,#00C2A8);color:#fff;border-radius:16px;padding:14px 16px;font-size:14.3px;line-height:1.45;margin-bottom:12px}
+.hallado b{display:block;font-family:var(--disp);font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;opacity:.95}
+.btn-buscar{width:100%;padding:15px;border-radius:100px;background:linear-gradient(135deg,#2E7DFF,#00C2A8);color:#fff;font-family:var(--disp);font-weight:700;font-size:15.5px;margin-bottom:14px}
+`;
+document.head.appendChild(est13);
+
+/* ---------- redactor automático de la explicación ---------- */
+function explicarAlimento(n,nom){
+  const f=[];
+  if(n.p>=20)f.push('Aporta bastante proteína ('+Math.round(n.p)+' g), que es el material con el que se reparan tus músculos');
+  else if(n.p>=10)f.push('Tiene una cantidad decente de proteína ('+Math.round(n.p)+' g)');
+  if(n.fi>=5)f.push('sus '+Math.round(n.fi)+' g de fibra te llenan más y ayudan al intestino y al colesterol');
+  else if(n.fi>=3)f.push('aporta algo de fibra');
+  const bueno=f.length?f.join(' y ')+'. ':'';
+
+  const m=[];
+  if(n.sat>=8)m.push('La grasa saturada está muy alta ('+n.sat.toFixed(1)+' g): en exceso sube el colesterol LDL, el que se va pegando en las arterias');
+  else if(n.sat>=5)m.push('La grasa saturada es elevada ('+n.sat.toFixed(1)+' g), casi un cuarto de tu límite del día');
+  if(n.az>=20)m.push('Trae bastante azúcar ('+Math.round(n.az)+' g, como '+Math.round(n.az/4)+' cucharaditas), que entra rápido a la sangre y no llena');
+  else if(n.az>=10)m.push('El azúcar es notable ('+Math.round(n.az)+' g)');
+  if(n.so>=800)m.push('El sodio es muy alto ('+Math.round(n.so)+' mg), y el sodio alto sostenido sube la presión arterial');
+  else if(n.so>=400)m.push('Tiene bastante sodio ('+Math.round(n.so)+' mg)');
+  if(n.k>=400&&n.p<10&&n.fi<3)m.push('Son muchas calorías para lo poco que llena');
+  const malo=m.length?m.join('. ')+'. ':'';
+
+  const niv=nivelPor100(n);
+  const cierre=niv===3?'En conjunto es una buena opción para tener seguido.'
+    :niv===2?'Está bien de vez en cuando, cuidando la cantidad.'
+    :'Mejor déjalo para ocasiones, no para todos los días.';
+  const base=(bueno+malo)||'Los valores son moderados en todo, sin nada que destaque ni para bien ni para mal. ';
+  return base+cierre;
+}
+function alternativaAuto(n){
+  if(n.sat>=8)return 'Busca una versión al horno o a la plancha en vez de frita: bajas casi toda la grasa saturada.';
+  if(n.az>=20)return 'La versión sin azúcar añadida te da lo mismo sin el golpe de glucosa.';
+  if(n.so>=800)return 'Una versión casera te deja controlar la sal, que es de donde viene casi todo el sodio.';
+  return '';
+}
+
+/* ---------- consulta a la base de datos abierta ---------- */
+async function investigarAlimento(nombre){
+  const url='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(nombre)+
+    '&search_simple=1&action=process&json=1&page_size=12'+
+    '&fields=product_name,brands,quantity,serving_size,nutriments,countries';
+  const r=await fetch(url);
+  const j=await r.json();
+  const out=[];
+  (j.products||[]).forEach(p=>{
+    if(!p.product_name)return;
+    const nu=p.nutriments||{};
+    const porS=nu['energy-kcal_serving'];
+    const usarS=porS>0&&p.serving_size;
+    const gv=(a,b)=>{const v=usarS?nu[a]:nu[b];return v==null?0:+(+v).toFixed(1)};
+    const k=Math.round(usarS?porS:(nu['energy-kcal_100g']||0));
+    if(!k)return;
+    const so=(()=>{
+      const s=usarS?nu['sodium_serving']:nu['sodium_100g'];
+      if(s!=null)return Math.round(s*1000);
+      const sal=usarS?nu['salt_serving']:nu['salt_100g'];
+      return sal!=null?Math.round(sal*400):0;
+    })();
+    out.push({
+      nom:p.product_name.trim(),marca:(p.brands||'').split(',')[0].trim(),
+      por:usarS?p.serving_size:'100 g',
+      n:{k:k,p:gv('proteins_serving','proteins_100g'),c:gv('carbohydrates_serving','carbohydrates_100g'),
+         g:gv('fat_serving','fat_100g'),sat:gv('saturated-fat_serving','saturated-fat_100g'),
+         az:gv('sugars_serving','sugars_100g'),so:so,fi:gv('fiber_serving','fiber_100g')}
+    });
+  });
+  return out;
+}
+
+/* ---------- formulario con investigación automática ---------- */
+const sugPrev13=abrirSugerirAlimento;
+abrirSugerirAlimento=function(){
+  sugPrev13();
+  const c=$('#infoCuerpo');
+  const nom=$('#sg-nom');
+  const zona=el('div');
+  const btn=el('button','btn-buscar','🔍  Buscar los datos automáticamente');
+  nom.parentNode.insertAdjacentElement('afterend',zona);
+  zona.parentNode.insertBefore(btn,zona);
+
+  const rellenar=(m)=>{
+    $('#sg-nom').value=m.nom+(m.marca?' · '+m.marca:'');
+    $('#sg-por').value=m.por;
+    $('#sg-k').value=m.n.k;$('#sg-p').value=m.n.p;$('#sg-c').value=m.n.c;
+    $('#sg-g').value=m.n.g;$('#sg-sat').value=m.n.sat;$('#sg-az').value=m.n.az;
+    zona.innerHTML='';
+    const niv=nivelPor100(m.n);
+    zona.appendChild(el('div','hallado','<b>✓ Datos encontrados</b>'+
+      'Rellenamos todo con los valores oficiales de '+m.nom+'. Revísalos y corrige si algo no coincide con lo que tú comes.'));
+    const prev=el('div','sug-caja');
+    prev.innerHTML='<h4>🩺 Así lo va a explicar la app</h4>'+
+      '<p style="margin-top:6px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+NIVCOL[niv]+';margin-right:7px"></span><b>'+NIVTXT[niv]+'</b></p>'+
+      '<p style="margin-top:8px">'+explicarAlimento(m.n,m.nom)+'</p>';
+    zona.appendChild(prev);
+    const ver=el('button','btn fantasma','Ver la ficha completa');
+    ver.onclick=()=>{
+      const a=[$('#sg-nom').value,m.por,m.n.k,m.n.p,m.n.c,m.n.g,m.n.sat,m.n.az,m.n.so,m.n.fi,niv,
+        explicarAlimento(m.n,m.nom),alternativaAuto(m.n)];
+      cerrar('#capaInfo');
+      setTimeout(()=>fichaAlimento(a,()=>pedirCantidad(a)),280);
+    };
+    zona.appendChild(ver);
+    guardarAuto=m;
+  };
+
+  btn.onclick=async()=>{
+    const q=nom.value.trim();
+    if(q.length<2){avisar('Escribe primero el nombre de la comida');return}
+    zona.innerHTML='';
+    zona.appendChild(el('div','buscando','<span class="spin"></span>Buscando "'+q+'" en la base de datos mundial…'));
+    let res=[];
+    try{res=await investigarAlimento(q)}catch(e){}
+    zona.innerHTML='';
+    if(!res.length){
+      zona.appendChild(el('div','sug-caja','<h4>No lo encontramos</h4><p>No pasa nada: llena los valores a mano con lo que diga la etiqueta, o mándanos la sugerencia y nosotros lo investigamos.</p>'));
+      return;
+    }
+    if(res.length===1){rellenar(res[0]);return}
+    zona.appendChild(el('div','etq','Encontramos '+res.length+'. ¿Cuál es?'));
+    res.slice(0,8).forEach(m=>{
+      const b=el('button','match');
+      b.innerHTML='<span class="semaforo" style="background:'+NIVCOL[nivelPor100(m.n)]+'"></span>'+
+        '<div class="crece"><b>'+m.nom+'</b><small>'+(m.marca?m.marca+' · ':'')+m.por+'</small></div>'+
+        '<div class="kcal">'+m.n.k+'</div>';
+      b.onclick=()=>rellenar(m);
+      zona.appendChild(b);
+    });
+  };
+
+  /* si escribe y no busca, se lo recordamos */
+  let t=null;
+  nom.oninput=()=>{
+    clearTimeout(t);
+    if(nom.value.trim().length<3)return;
+    t=setTimeout(()=>{if(!zona.children.length)btn.textContent='🔍  Buscar los datos de "'+nom.value.trim().slice(0,18)+'"'},600);
+  };
+
+  /* al guardar, usar la explicación automática si no hay una escrita */
+  const guardar=[...c.querySelectorAll('.btn')].find(b=>b.textContent.includes('Guardar en mi lista'));
+  if(guardar){
+    const orig=guardar.onclick;
+    guardar.onclick=()=>{
+      const antes=misAlimentos.length;
+      orig();
+      if(misAlimentos.length>antes){
+        const f=misAlimentos[misAlimentos.length-1];
+        const n={k:f[2],p:f[3],c:f[4],g:f[5],sat:f[6],az:f[7],so:f[8],fi:f[9]};
+        f[11]=explicarAlimento(n,f[0]);
+        f[12]=alternativaAuto(n);
+        f[10]=nivelPor100(n);
+        grabar(KM.a,misAlimentos);
+      }
+    };
+  }
+};
+let guardarAuto=null;
+
+</script>
+<script>
+/* =========================================================
+   MÓDULO 14 — diagnóstico y blindaje
+   Captura errores reales y evita que un fallo tumbe la app.
+   ========================================================= */
+(function(){
+  const K='pulso.errores';
+  let errores=[];try{errores=JSON.parse(localStorage.getItem(K)||'[]')}catch(e){}
+  const guardar=()=>{try{localStorage.setItem(K,JSON.stringify(errores.slice(-25)))}catch(e){}};
+
+  const registrar=(msg,fuente,linea,col)=>{
+    const externo=fuente&&!fuente.includes(location.host);
+    errores.push({m:String(msg).slice(0,300),f:fuente||'',l:linea||0,c:col||0,
+      ext:!!externo,t:new Date().toISOString()});
+    guardar();
+  };
+
+  window.addEventListener('error',e=>{
+    registrar(e.message||'sin mensaje',e.filename,e.lineno,e.colno);
+  },true);
+  window.addEventListener('unhandledrejection',e=>{
+    const r=e.reason;
+    registrar('Promesa rechazada: '+((r&&r.message)||r),'',0,0);
+  });
+
+  /* verlo desde Ajustes */
+  const btn=document.querySelector('#btnAjustes');
+  if(btn){
+    const orig=btn.onclick;
+    btn.onclick=function(){
+      orig&&orig.call(this);
+      const c=document.querySelector('#infoCuerpo');if(!c)return;
+      const b=document.createElement('button');
+      b.className='btn fantasma';
+      b.textContent='🔧  Diagnóstico ('+errores.length+')';
+      b.onclick=()=>{
+        document.querySelector('#infoTitulo').textContent='Diagnóstico';
+        const cc=document.querySelector('#infoCuerpo');cc.innerHTML='';
+        const inf=document.createElement('div');inf.className='dr';
+        inf.innerHTML='<h4>Estado</h4>'+
+          'Versión de la app: 1.0<br>'+
+          'Navegador: '+(navigator.userAgent.slice(0,70))+'<br>'+
+          'Sin conexión guardada: '+('serviceWorker' in navigator?'sí':'no')+'<br>'+
+          'Cámara disponible: '+(navigator.mediaDevices?'sí':'no')+'<br>'+
+          'Errores registrados: '+errores.length;
+        cc.appendChild(inf);
+        if(!errores.length){
+          const v=document.createElement('div');v.className='vacio';
+          v.textContent='Ningún error registrado. Todo funcionando.';
+          cc.appendChild(v);
+        }
+        errores.slice().reverse().forEach(er=>{
+          const d=document.createElement('div');d.className='dr';
+          const arch=er.f?er.f.split('/').pop():'—';
+          d.innerHTML='<h4>'+(er.ext?'⚠️ Recurso externo':'🐞 Error')+'</h4>'+
+            '<div style="font-size:13.5px;line-height:1.5">'+
+            '<b>'+er.m+'</b><br>'+
+            (er.f?'Archivo: '+arch+(er.l?' · línea '+er.l:''):'')+
+            '<br><span style="color:var(--tenue)">'+new Date(er.t).toLocaleString('es')+'</span>'+
+            (er.ext?'<br><span style="color:var(--tenue)">Viene de una librería externa. Casi siempre no afecta a la app.</span>':'')+
+            '</div>';
+          cc.appendChild(d);
+        });
+        const lim=document.createElement('button');
+        lim.className='btn peligro';lim.textContent='Borrar registro';
+        lim.onclick=()=>{errores=[];guardar();document.querySelector('#cerrarInfo').click()};
+        cc.appendChild(lim);
+        document.querySelector('#capaInfo').classList.add('on');
+      };
+      const sep=c.querySelector('hr.sep');
+      if(sep)c.insertBefore(b,sep);else c.appendChild(b);
+    };
+  }
+})();
+
+</script>
 </body>
 </html>
