@@ -5025,5 +5025,131 @@ if(typeof REC!=='undefined'){
 }
 
 </script>
+<script>
+/* =========================================================
+   MÓDULO 18 — cantidades por comida
+   Muestra cuánto de cada ingrediente, ajustado a la porción
+   que el plan calculó, y deja modificarla a mano.
+   ========================================================= */
+const est18=document.createElement('style');
+est18.textContent=`
+.ings{border-top:1px solid var(--linea);margin-top:12px;padding-top:12px}
+.ings .tit{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--tenue);margin-bottom:9px}
+.ing-fila{display:flex;align-items:baseline;gap:10px;padding:6px 0;font-size:14.5px}
+.ing-fila b{flex:1;font-weight:500}
+.ing-fila span{font-family:var(--disp);font-weight:800;font-size:14.5px;color:var(--tinta);white-space:nowrap}
+.porcion{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--linea)}
+.porcion .et{flex:1;font-size:13px;color:var(--tenue);font-weight:600}
+.porcion .pm{display:flex;align-items:center;background:var(--fondo);border-radius:100px}
+.porcion .pm button{width:34px;height:34px;border-radius:50%;font-size:19px;font-weight:600;color:var(--tinta)}
+.porcion .pm b{font-family:var(--disp);font-weight:800;font-size:14.5px;min-width:44px;text-align:center}
+`;
+document.head.appendChild(est18);
+
+const FRAC={0.25:'¼',0.5:'½',0.75:'¾',1.25:'1¼',1.5:'1½',1.75:'1¾',2.5:'2½',3.5:'3½'};
+function bonito(n){
+  if(FRAC[n])return FRAC[n];
+  if(Number.isInteger(n))return String(n);
+  const e=Math.floor(n),r=+(n-e).toFixed(2);
+  if(FRAC[r])return e+FRAC[r];
+  return String(Math.round(n*10)/10);
+}
+function escalarCantidad(cant,f){
+  const m=cant.match(/^([\d.,½¼¾]+)\s*(.*)$/);
+  if(!m)return cant;
+  let num=m[1]==='½'?0.5:m[1]==='¼'?0.25:m[1]==='¾'?0.75:parseFloat(m[1].replace(',','.'));
+  if(!(num>0))return cant;
+  const uni=(m[2]||'').trim();
+  let v=num*f;
+  if(/^(g|ml)$/i.test(uni))v=Math.max(5,Math.round(v/5)*5);
+  else if(/taza/i.test(uni))v=Math.max(0.25,Math.round(v*4)/4);
+  else v=Math.max(0.5,Math.round(v*2)/2);
+  return bonito(v)+(uni?' '+uni:'');
+}
+/* plural correcto para unidades */
+function ajustarUnidad(nom,cantTxt){
+  const uno=/^(1|½|¼|¾)\s/.test(cantTxt);
+  if(/unidades/.test(cantTxt)&&uno)return cantTxt.replace('unidades','unidad');
+  if(/\bunidad\b/.test(cantTxt)&&!uno)return cantTxt.replace('unidad','unidades');
+  return cantTxt;
+}
+
+/* ---------- añadir ingredientes y ajuste de porción a cada comida ---------- */
+const verPlanPrev18=verPlan;
+verPlan=function(plan,guardado){
+  verPlanPrev18(plan,guardado);
+  const c=$('#infoCuerpo');
+  const dia=plan.d[diaVer];
+  const cards=[...c.querySelectorAll('.comida-card')];
+  cards.forEach((card,i)=>{
+    const cm=dia.comidas[i];if(!cm)return;
+    const r=REC.find(x=>x.id===cm.id);if(!r)return;
+    const f=cm.f||1;
+
+    /* lista de ingredientes con cantidades */
+    const box=el('div','ings','<div class="tit">Qué lleva y cuánto</div>');
+    r.ing.forEach(s=>{
+      const [nom,cant]=s.split('|');
+      const esc=ajustarUnidad(nom,escalarCantidad(cant,f));
+      const fila=el('div','ing-fila','<b>'+nom+'</b><span>'+esc+'</span>');
+      box.appendChild(fila);
+    });
+    const acc=card.querySelector('.comida-acc');
+    card.insertBefore(box,acc);
+
+    /* ajustar la porción a mano */
+    const p=el('div','porcion');
+    p.innerHTML='<div class="et">Porción'+(f!==1?' · '+bonito(f)+'× de la receta base':'')+'</div>';
+    const pm=el('div','pm');
+    const menos=el('button',null,'−'),val=el('b',null,bonito(f)+'×'),mas=el('button',null,'+');
+    const cambiar=d=>{
+      cm.f=Math.max(0.5,Math.min(2.5,+( (cm.f||1)+d ).toFixed(2)));
+      if(guardado)grabar(KDT.plan,plan);
+      verPlan(plan,guardado);
+    };
+    menos.onclick=()=>cambiar(-0.25);
+    mas.onclick=()=>cambiar(0.25);
+    pm.appendChild(menos);pm.appendChild(val);pm.appendChild(mas);
+    p.appendChild(pm);
+    card.insertBefore(p,acc);
+  });
+
+  /* nota explicativa una sola vez */
+  if(cards.length&&!c.querySelector('.nota-porc')){
+    const n=el('div','dr');
+    n.className='dr nota-porc';
+    n.innerHTML='<h4>⚖️ Sobre las cantidades</h4>'+
+      'Las cantidades ya vienen ajustadas para que el día cuadre con tu objetivo. '+
+      'Si te queda mucha o poca comida, usa el <b>+</b> y el <b>−</b> de cada plato: los números del día se recalculan solos. '+
+      'Son estimaciones en crudo o en su forma habitual, así que no hace falta pesar todo al gramo.';
+    const bc=[...c.querySelectorAll('.btn')].find(b=>b.textContent.includes('lista de compras'));
+    if(bc)c.insertBefore(n,bc);else c.appendChild(n);
+  }
+};
+
+/* ---------- también en la pantalla de cambiar comida ---------- */
+const cambiarPrev18=cambiarComida;
+cambiarComida=function(plan,d,i,guardado){
+  cambiarPrev18(plan,d,i,guardado);
+  const c=$('#infoCuerpo');
+  const cm=plan.d[d].comidas[i];
+  const rep=(REPARTO[plan.nComidas]||REPARTO[4])[cm.s];
+  const ops=[...c.querySelectorAll('.plan-op')];
+  const alts=alternativas(cm.id);
+  ops.forEach((b,j)=>{
+    const r=alts[j];if(!r)return;
+    const f=Math.max(0.6,Math.min(1.8,Math.round((plan.meta.kcal*rep/r.k)*4)/4));
+    const txt=r.ing.map(s=>{
+      const [nom,cant]=s.split('|');
+      return nom+' '+ajustarUnidad(nom,escalarCantidad(cant,f));
+    }).join(' · ');
+    const p=document.createElement('small');
+    p.style.cssText='display:block;margin-top:7px;color:var(--tenue);font-size:12.5px;line-height:1.4';
+    p.textContent=txt;
+    b.appendChild(p);
+  });
+};
+
+</script>
 </body>
 </html>

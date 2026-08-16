@@ -1,7 +1,7 @@
 /* PULSO — service worker
    Estrategia: la red primero para el contenido (así las actualizaciones
    llegan siempre), el caché queda solo como respaldo sin internet. */
-const CACHE = 'pulso-v15';
+const CACHE = 'pulso-v16';
 const ARCHIVOS = [
   './',
   './index.html',
