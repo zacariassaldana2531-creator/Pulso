@@ -3346,5 +3346,183 @@ if(typeof ALIM!=='undefined'){
 }
 
 </script>
+<script>
+/* =========================================================
+   MÓDULO 11 — arranque sin formulario
+   Primero explorar, después personalizar. Onboarding progresivo,
+   saltable y que recuerda dónde te quedaste.
+   ========================================================= */
+const KO={p:'pulso.onbprog'};
+let onbProg=leer(KO.p,{paso:0,resp:{}});
+
+/* el onboarding viejo ya no aparece solo */
+(function(){const d=$('#onb');if(d)d.classList.remove('on')})();
+if(!onb){onb={nombre:'',explorando:true};grabar(KP.o,onb)}
+
+const PLAN_PASOS=[
+ {k:'objetivo',t:'¿Cuál es tu objetivo?',s:'Con esto elegimos tus ejercicios y tus repeticiones.',
+  ops:[['grasa','🔥  Perder grasa'],['musculo','💪  Ganar músculo'],['fuerza','🏋️  Ganar fuerza'],['condicion','⚡  Mejorar mi condición física'],['mantener','⚖️  Mantenerme']]},
+ {k:'lugar',t:'¿Dónde entrenas?',s:'Solo te mostramos ejercicios que puedas hacer de verdad.',
+  ops:[['gym','🏋️  En el gimnasio'],['casa','🏠  En casa'],['ambos','🔀  En los dos']]},
+ {k:'dias',t:'¿Cuántos días puedes entrenar?',s:'Sé realista. Con 3 días constantes ya se ven resultados.',
+  ops:[['2','2 días'],['3','3 días'],['4','4 días'],['5','5 días'],['6','6 días']]},
+ {k:'tiempo',t:'¿Cuánto tiempo tienes?',s:'Ajustamos la cantidad de ejercicios a tu tiempo real.',
+  ops:[['20','20 minutos'],['30','30 minutos'],['45','45 minutos'],['60','60 minutos o más']]},
+ {k:'nivel',t:'¿Cuál es tu nivel?',s:'Nadie te está juzgando. Esto es para no lesionarte.',
+  ops:[['principiante','Principiante — llevo poco o nada'],['intermedio','Intermedio — 6 meses a 2 años'],['avanzado','Avanzado — más de 2 años']]}
+];
+
+const est11=document.createElement('style');
+est11.textContent=`
+#onb .op{font-size:16.5px;padding:18px 20px}
+#onb .atras{position:absolute;left:20px;top:calc(var(--st) + 22px);width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;font-size:20px;z-index:2}
+#onb .top{position:relative}
+.crear-plan{border-radius:26px;padding:24px;color:#fff;margin-bottom:14px;position:relative;overflow:hidden;
+ background:linear-gradient(135deg,#7B5CFF,#FF4D6D 60%,#FF8A3D);box-shadow:0 16px 38px -12px rgba(123,92,255,.7);width:100%;text-align:left}
+.crear-plan::after{content:'';position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.14);top:-80px;right:-60px}
+.crear-plan h3{font-family:var(--disp);font-weight:800;font-size:25px;letter-spacing:-.03em;margin:0 0 6px;position:relative}
+.crear-plan p{font-size:14.5px;opacity:.94;margin:0 0 16px;position:relative;line-height:1.45}
+.crear-plan .go{display:inline-block;background:#fff;color:#171340;padding:13px 26px;border-radius:100px;font-family:var(--disp);font-weight:800;font-size:15.5px;position:relative}
+.crear-plan .retomar{display:block;margin-top:10px;font-size:13px;opacity:.9;position:relative}
+.explora{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+.explora button{border-radius:20px;padding:16px 14px;text-align:left;color:#fff;box-shadow:var(--sombra-c);background:linear-gradient(135deg,var(--c),var(--c2))}
+.explora .e{font-size:24px}
+.explora b{display:block;font-family:var(--disp);font-weight:800;font-size:16px;margin-top:6px;letter-spacing:-.02em}
+.explora small{font-size:12.3px;opacity:.92;line-height:1.35;display:block;margin-top:2px}
+.listo-caja{text-align:center;padding:10px 0 4px}
+.listo-caja .tick{font-size:56px;margin-bottom:6px}
+.omitir{display:block;width:100%;text-align:center;padding:14px;color:var(--tenue);font-size:14.5px;font-weight:600}
+`;
+document.head.appendChild(est11);
+
+/* ---------------- onboarding progresivo ---------------- */
+let pIdx=0;
+function pintarPlanPaso(){
+  const d=$('#onb'),p=PLAN_PASOS[pIdx];
+  d.querySelector('.puntos').innerHTML=PLAN_PASOS.map((_,i)=>'<i class="'+(i<=pIdx?'on':'')+'"></i>').join('');
+  d.querySelector('h2').textContent=p.t;
+  d.querySelector('.sub').textContent=p.s;
+  let atras=d.querySelector('.atras');
+  if(!atras){atras=el('button','atras','‹');d.querySelector('.top').appendChild(atras)}
+  atras.style.display=pIdx?'grid':'none';
+  atras.onclick=()=>{if(pIdx>0){pIdx--;guardarProg();pintarPlanPaso()}};
+  const c=d.querySelector('.cuerpo');c.innerHTML='';
+  p.ops.forEach(([v,t])=>{
+    const b=el('button','op'+(onbProg.resp[p.k]===v?' sel':''),t);
+    b.onclick=()=>{
+      onbProg.resp[p.k]=v;guardarProg();
+      [...c.children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+      setTimeout(()=>{pIdx<PLAN_PASOS.length-1?(pIdx++,guardarProg(),pintarPlanPaso()):planListo()},260);
+    };
+    c.appendChild(b);
+  });
+  $('#onbSig').style.display='none';
+  $('#onbSalt').textContent='Ahora no, quiero explorar';
+}
+function guardarProg(){onbProg.paso=pIdx;grabar(KO.p,onbProg)}
+function abrirPlan(){
+  pIdx=Math.min(onbProg.paso||0,PLAN_PASOS.length-1);
+  const d=$('#onb');d.classList.add('on');
+  $('#onbSig').onclick=null;
+  $('#onbSalt').onclick=()=>{d.classList.remove('on');avisar('Puedes crear tu plan cuando quieras')};
+  d.querySelector('.cerrarc')&&0;
+  pintarPlanPaso();
+}
+function recomendarPrograma(r){
+  if(r.lugar==='casa')return 'casa';
+  if(r.objetivo==='musculo'&&+r.dias>=4)return 'volumen';
+  if(r.objetivo==='grasa'&&+r.dias>=4)return 'volumen';
+  return 'fuerza';
+}
+function planListo(){
+  const d=$('#onb'),r=onbProg.resp;
+  d.querySelector('.puntos').innerHTML=PLAN_PASOS.map(()=>'<i class="on"></i>').join('');
+  d.querySelector('h2').textContent='Perfecto';
+  d.querySelector('.sub').textContent='Ya tenemos suficiente para empezar.';
+  const at=d.querySelector('.atras');if(at)at.style.display='none';
+  const p=progPorId(recomendarPrograma(r));
+  const c=d.querySelector('.cuerpo');c.innerHTML='';
+  const caja=el('div','listo-caja','<div class="tick">✅</div>');
+  c.appendChild(caja);
+  const t=el('div','op');
+  t.style.cssText='background:#fff;color:#171340;padding:20px';
+  t.innerHTML='<div style="font-family:var(--disp);font-weight:800;font-size:20px;letter-spacing:-.02em">'+p.emoji+'  '+p.nom+'</div>'+
+    '<div style="font-size:13.5px;color:#7B77A6;margin:4px 0 10px">'+p.sem+' semanas · '+p.dias+' días por semana</div>'+
+    '<div style="font-size:14.5px;line-height:1.5">'+p.desc+'</div>';
+  c.appendChild(t);
+  const notas={grasa:'Con tu objetivo de perder grasa, la clave está tanto en entrenar como en lo que comes. Puedes activar el conteo de calorías cuando quieras.',
+   musculo:'Para ganar músculo necesitas comer suficiente proteína. Cuando quieras, calcula tus números en la pestaña Dieta.',
+   fuerza:'Tu progreso se mide en peso levantado. Usa la calculadora de 1RM para ver tu nivel.',
+   condicion:'Combina las sesiones con algo de cardio y vas a notar el cambio en pocas semanas.',
+   mantener:'Mantenerse también es una meta válida y la constancia es lo único que hace falta.'}[r.objetivo];
+  if(notas)c.appendChild(el('div','op',notas)).style.fontSize='14.3px';
+  $('#onbSig').style.display='block';
+  $('#onbSig').textContent='Ver mi plan';
+  $('#onbSig').disabled=false;
+  $('#onbSig').onclick=()=>{
+    onb=Object.assign(onb||{},r,{explorando:false,hecho:true});
+    grabar(KP.o,onb);
+    activarPrograma(p.id);
+    onbProg={paso:0,resp:r};grabar(KO.p,onbProg);
+    d.classList.remove('on');
+    irA('rutinas');
+  };
+  $('#onbSalt').textContent='Ahora no';
+  $('#onbSalt').onclick=()=>{d.classList.remove('on')};
+}
+
+/* ---------------- pantalla Hoy: explorar primero ---------------- */
+const hoyPrev11=pintarHoy;
+pintarHoy=function(){
+  hoyPrev11();
+  const cont=$('#hoyActiva');
+  if(!progEst){
+    const empezado=Object.keys(onbProg.resp||{}).length>0;
+    const b=el('button','crear-plan');
+    b.innerHTML='<h3>'+(empezado?'Continuemos donde lo dejamos':'Crea tu plan')+'</h3>'+
+      '<p>'+(empezado?'Te faltan '+(PLAN_PASOS.length-Object.keys(onbProg.resp).length)+' preguntas para tener tu programa listo.'
+        :'Cinco preguntas rápidas y te armamos un programa de semanas hecho para ti.')+'</p>'+
+      '<span class="go">'+(empezado?'Continuar':'Crear mi plan')+'</span>'+
+      (empezado?'':'<span class="retomar">O explora la app libremente, sin dar ningún dato.</span>');
+    b.onclick=abrirPlan;
+    cont.prepend(b);
+  }
+  if(!progEst&&!historial.length){
+    const g=el('div','explora');
+    [['🏋️','Entrena','Ejercicios explicados paso a paso','Espalda',()=>irA('ejercicios')],
+     ['🍎','Come','Registra lo que comes y entiéndelo','Cardio',()=>irA('dieta')],
+     ['🏆','Supera retos','Constancia, medallas y progreso','Pecho',()=>irA('retos')],
+     ['📈','Mide','Mira cómo evoluciona tu cuerpo','Piernas',()=>irA('progreso')]
+    ].forEach(([e,t,s,col,fn])=>{
+      const b=el('button',null,'<div class="e">'+e+'</div><b>'+t+'</b><small>'+s+'</small>');
+      pintaColor(b,col);b.onclick=fn;g.appendChild(b);
+    });
+    const ref=cont.nextElementSibling;
+    $('#v-hoy').insertBefore(g,ref);
+  }
+};
+
+/* ---------------- perfil físico: opcional y después ---------------- */
+const perfilPrev11=abrirPerfil;
+abrirPerfil=function(){
+  perfilPrev11();
+  const c=$('#infoCuerpo');
+  const cab=el('div','dr','<h4>📋 ¿Para qué sirve esto?</h4>Con tu peso, altura, edad y sexo podemos calcular cuántas calorías gastas al día y cuánta proteína te conviene. Sin estos datos la app funciona igual, solo que no te da esos números.');
+  c.insertBefore(cab,c.firstChild);
+  const om=el('button','omitir','Omitir por ahora');
+  om.onclick=()=>{cerrar('#capaInfo');avisar('Puedes llenarlo cuando quieras')};
+  c.appendChild(om);
+};
+
+/* si el usuario ya tenía el onboarding viejo hecho, se respeta */
+if(onb&&onb.meta&&!onbProg.resp.objetivo){
+  onbProg.resp={objetivo:onb.meta==='musculo'?'musculo':onb.meta==='bajar'?'grasa':'mantener',
+    lugar:onb.lugar||'gym',dias:onb.dias||'3',tiempo:'45',
+    nivel:onb.nivel==='mucho'?'avanzado':onb.nivel==='medio'?'intermedio':'principiante'};
+  grabar(KO.p,onbProg);
+}
+pintarHoy();
+
+</script>
 </body>
 </html>
