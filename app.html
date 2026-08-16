@@ -1552,7 +1552,7 @@ const BEN={
  k9:'Cardio en casa sin equipo ni espacio. Sirve para calentar o para intervalos.'
 };
 
-/* ---------------- alimentos dominicanos ---------------- */
+/* ---------------- base de alimentos ---------------- */
 const ALI=[
  ['Arroz blanco','1 taza',205,4,45,0.4],['Moro de guandules','1 taza',280,8,48,7],
  ['Locrio de pollo','1 taza',320,16,44,9],['Habichuelas guisadas','1 taza',220,13,38,2],
@@ -1942,13 +1942,13 @@ const ALIM=[
 ['Arroz integral','1 taza',215,5,45,1.6,0.3,0,5,3.5,3,'La fibra hace que la energía entre lenta y pareja, sin bajones de azúcar. Te llena más y ayuda al intestino.',''],
 ['Moro de guandules','1 taza',280,8,48,7,1.8,1,480,7,2,'El guandul aporta fibra y proteína vegetal, eso es bueno. Lo que sube el número es el aceite y la sal del sofrito.','Menos aceite al sofreír baja unas 60 kcal por taza.'],
 ['Locrio de pollo','1 taza',320,16,44,9,2.5,1,620,2,2,'Plato completo con buena proteína. El punto flojo es el sodio: casi un tercio de todo lo que deberías consumir en el día.',''],
-['Habichuelas guisadas','1 taza',220,13,38,2,0.5,2,400,11,3,'De lo mejor de la comida dominicana. Once gramos de fibra alimentan las bacterias buenas del intestino y bajan el colesterol. Proteína vegetal de calidad.',''],
+['Habichuelas guisadas','1 taza',220,13,38,2,0.5,2,400,11,3,'De lo mejor que puedes comer. Once gramos de fibra alimentan las bacterias buenas del intestino y bajan el colesterol. Proteína vegetal de calidad.',''],
 ['Plátano maduro frito','1 unidad',200,1,35,8,3.5,14,4,2,2,'El plátano en sí es bueno. El problema es freírlo: absorbe aceite y si ese aceite ya se usó varias veces, se forman compuestos que irritan las arterias.','Plátano maduro al horno: mismo sabor, sin el aceite.'],
 ['Tostones','4 unidades',180,1,30,7,3,0,180,2,2,'Fritura de plátano verde. Tiene almidón resistente, que es bueno para el intestino, pero el aceite le suma grasa y calorías.',''],
 ['Mangú','1 taza',230,3,42,6,3.5,0,320,3,2,'El plátano hervido es excelente: potasio, fibra y energía lenta. Lo que lo carga es la mantequilla y la cebolla en aceite.','Con menos mantequilla queda en unas 170 kcal.'],
 ['Mofongo','1 bola',380,8,45,18,7,0,520,4,1,'Tostón machacado con chicharrón: mucha grasa saturada y mucha sal en una sola porción. Sabroso, pero de vez en cuando.','Mofongo con pollo en vez de chicharrón baja la grasa a la mitad.'],
 ['Yuca hervida','1 taza',165,1,39,0.3,0.1,2,14,2,3,'Carbohidrato limpio, sin grasa, fácil de digerir. Buena opción de vívere si no la fríes.',''],
-['Víveres hervidos','1 taza',180,2,42,0.4,0.1,3,20,4,3,'Energía natural con fibra y potasio, cero grasa añadida. De lo más sano del plato dominicano.',''],
+['Víveres hervidos','1 taza',180,2,42,0.4,0.1,3,20,4,3,'Energía natural con fibra y potasio, cero grasa añadida. De lo más sano que puedes poner en el plato.',''],
 ['Batata hervida','1 taza',180,4,41,0.2,0.1,13,72,6,3,'Rica en betacaroteno, que el cuerpo convierte en vitamina A para la vista y la piel. Su azúcar es natural y viene con fibra.',''],
 ['Papa hervida','1 taza',135,3,31,0.2,0.1,1,10,3,3,'Buena fuente de potasio, que ayuda a controlar la presión. Hervida está bien; frita cambia la historia.',''],
 ['Espagueti guisado','1 taza',320,10,45,11,4,6,780,2,2,'La pasta no es el problema. El sodio sí: casi 800 mg por taza entre el jamón, la salsa y los cubitos.',''],
@@ -2832,6 +2832,518 @@ est6.textContent=`
 }
 `;
 document.head.appendChild(est6);
+
+</script>
+<script>
+/* =========================================================
+   MÓDULO 7 — "dime qué comiste" en lenguaje normal
+   ========================================================= */
+const sinTilde=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const NUMS={un:1,una:1,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,
+  media:.5,medio:.5,'1/2':.5,mitad:.5,poquito:.5,poco:.5,bastante:1.5,mucho:2};
+const SINON={
+ arroz:'Arroz blanco',habichuela:'Habichuelas guisadas',habichuelas:'Habichuelas guisadas',
+ pollo:'Pollo guisado',pechuga:'Pechuga a la plancha',carne:'Res guisada',res:'Res guisada',
+ cerdo:'Chuleta de cerdo',chuleta:'Chuleta de cerdo',pescado:'Pescado frito',
+ platano:'Plátano maduro frito',maduro:'Plátano maduro frito',tostones:'Tostones',
+ mangu:'Mangú',mofongo:'Mofongo',sancocho:'Sancocho',moro:'Moro de guandules',
+ locrio:'Locrio de pollo',espagueti:'Espagueti guisado',spaghetti:'Espagueti guisado',
+ huevo:'Huevo hervido',huevos:'Huevo hervido',queso:'Queso de freír',salami:'Salami frito',
+ chicharron:'Chicharrón',yuca:'Yuca hervida',papa:'Papa hervida',batata:'Batata hervida',
+ viveres:'Víveres hervidos',ensalada:'Ensalada verde',aguacate:'Aguacate',
+ pan:'Pan de agua',avena:'Avena cocida',leche:'Leche entera',yogur:'Yogur natural',
+ cafe:'Café con leche',jugo:'Jugo natural sin azúcar',refresco:'Refresco',coca:'Refresco',
+ agua:'Agua',cerveza:'Cerveza',guineo:'Guineo',manzana:'Manzana',china:'Naranja',
+ naranja:'Naranja',lechosa:'Lechosa',pina:'Piña',mango:'Mango',
+ empanada:'Empanada',quipe:'Quipe',pastelito:'Pastelito',pizza:'Pizza',
+ hamburguesa:'Hamburguesa',papas:'Papas fritas',fritas:'Papas fritas',
+ atun:'Atún en agua',sardina:'Sardina en aceite',camarones:'Camarones',
+ bacalao:'Bacalao guisado',mani:'Maní',chocolate:'Chocolate',helado:'Helado',
+ galletas:'Galletas de soda',maiz:'Maíz',repollo:'Ensalada de repollo',
+ morir:'Morir soñando',chinola:'Jugo de chinola',sopa:'Sopa de pollo',
+ proteina:'Proteína en polvo',batida:'Proteína en polvo'
+};
+function buscaAlimento(frag){
+  const t=sinTilde(frag).replace(/[^a-z0-9\s\/]/g,' ').split(/\s+/).filter(Boolean);
+  for(const p of t)if(SINON[p])return ALIM.find(a=>a[0]===SINON[p]);
+  let mejor=null,pts=0;
+  ALIM.forEach(a=>{
+    const n=sinTilde(a[0]).split(/\s+/);
+    let s=0;
+    t.forEach(p=>{if(p.length<3)return;n.forEach(w=>{if(w===p)s+=2;else if(w.startsWith(p)||p.startsWith(w))s+=1})});
+    if(s>pts){pts=s;mejor=a}
+  });
+  return pts>=2?mejor:null;
+}
+function cantidadDe(frag){
+  const t=sinTilde(frag).split(/\s+/);
+  for(const p of t){
+    if(NUMS[p]!=null)return NUMS[p];
+    const n=parseFloat(p.replace(',','.'));
+    if(!isNaN(n)&&n>0&&n<=20)return n;
+  }
+  return 1;
+}
+function analizarTexto(txt){
+  const partes=sinTilde(txt).split(/\s+(?:con|y|mas|además|ademas)\s+|[,+]/).map(s=>s.trim()).filter(Boolean);
+  const encontrados=[],perdidos=[];
+  partes.forEach(p=>{
+    const a=buscaAlimento(p);
+    if(a)encontrados.push({a,n:cantidadDe(p)});else if(p.length>2)perdidos.push(p);
+  });
+  return {encontrados,perdidos};
+}
+function veredictoComida(items){
+  const t={k:0,p:0,c:0,g:0,sat:0,az:0,so:0,fi:0};
+  items.forEach(({a,n})=>{t.k+=a[2]*n;t.p+=a[3]*n;t.c+=a[4]*n;t.g+=a[5]*n;
+    t.sat+=a[6]*n;t.az+=a[7]*n;t.so+=a[8]*n;t.fi+=a[9]*n});
+  const plan=perfil?calcularPlan(perfil):null;
+  const v=[];
+  let puntos=0;
+  if(t.sat>LIM.sat*0.5){v.push(['⚠️','Esta comida sola trae '+Math.round(t.sat)+' g de grasa saturada, más de la mitad de todo tu día. Repetido a diario, esto es lo que sube el colesterol y tapa las arterias.'])}
+  else{v.push(['✅','Grasa saturada bajo control: '+Math.round(t.sat)+' g.']);puntos++}
+  if(t.so>900){v.push(['⚠️','Mucha sal: '+Math.round(t.so)+' mg de sodio. El límite del día entero son 2.300 mg. El exceso sube la presión arterial.'])}
+  else{v.push(['✅','Sodio razonable: '+Math.round(t.so)+' mg.']);puntos++}
+  if(t.az>25){v.push(['⚠️','Trae '+Math.round(t.az)+' g de azúcar, como '+Math.round(t.az/4)+' cucharaditas. Eso dispara la insulina y en un rato te da hambre otra vez.'])}
+  else{v.push(['✅','Poca azúcar: '+Math.round(t.az)+' g.']);puntos++}
+  if(t.p<15){v.push(['🍗','Le falta proteína: solo '+Math.round(t.p)+' g. Sin proteína no reparas músculo y el plato no te llena. Agrégale pollo, huevo o atún.'])}
+  else{v.push(['✅','Buena proteína: '+Math.round(t.p)+' g.']);puntos++}
+  if(t.fi<5){v.push(['🥬','Casi sin fibra ('+Math.round(t.fi)+' g). Súmale ensalada, habichuelas o una fruta y digieres mejor.'])}
+  else{v.push(['✅','Trae fibra: '+Math.round(t.fi)+' g.']);puntos++}
+  if(plan){
+    const pc=Math.round(t.k/plan.kcal*100);
+    v.unshift([pc>45?'📊':'📊','Son '+Math.round(t.k)+' kcal, el '+pc+'% de tu meta del día ('+plan.kcal+' kcal).'+(pc>45?' Es una comida grande; ajusta el resto del día.':'')]);
+  }
+  const nivel=puntos>=4?3:puntos>=2?2:1;
+  const titulo=nivel===3?'Buena comida':nivel===2?'Se puede mejorar':'Comida pesada';
+  return {t,v,nivel,titulo};
+}
+function abrirEscribir(){
+  $('#infoTitulo').textContent='¿Qué comiste?';
+  const c=$('#infoCuerpo');c.innerHTML='';
+  c.appendChild(el('div','vacio','Escríbelo como lo dirías normal.<br>Ejemplo: <b>dos tazas de arroz con habichuelas y pollo guisado</b>'));
+  const ta=document.createElement('textarea');
+  ta.className='buscar';ta.rows=3;ta.style.borderRadius='18px';ta.style.resize='none';
+  ta.placeholder='Arroz con habichuelas, un tostón y jugo de chinola';
+  c.appendChild(ta);
+  const b=el('button','btn','Analizar');
+  const out=el('div');
+  b.onclick=()=>{
+    const {encontrados,perdidos}=analizarTexto(ta.value);
+    out.innerHTML='';
+    if(!encontrados.length){
+      out.appendChild(el('div','vacio','No reconocí ningún alimento. Prueba con nombres más simples, como "arroz", "pollo", "tostones".'));
+      return;
+    }
+    const r=veredictoComida(encontrados);
+    const col=NIVCOL[r.nivel];
+    const cab=el('div','rut-tarjeta');
+    cab.style.background='linear-gradient(135deg,'+col+','+col+'cc)';
+    cab.innerHTML='<div class="etq" style="color:rgba(255,255,255,.9)">'+NIVTXT[r.nivel]+'</div><h3>'+r.titulo+'</h3>'+
+      '<div class="mini-stats" style="margin-top:14px">'+
+      '<div><b>'+Math.round(r.t.k)+'</b><small>kcal</small></div>'+
+      '<div><b>'+Math.round(r.t.p)+'</b><small>g proteína</small></div>'+
+      '<div><b>'+Math.round(r.t.sat)+'</b><small>g saturada</small></div></div>';
+    out.appendChild(cab);
+    out.appendChild(el('div','etq','Lo que entendí'));
+    encontrados.forEach(({a,n})=>{
+      const f=el('div','comida');
+      f.innerHTML='<span class="semaforo" style="background:'+NIVCOL[a[10]]+'"></span>'+
+        '<div class="crece"><b>'+a[0]+'</b><small>'+n+' × '+a[1]+'</small></div><div class="kcal">'+Math.round(a[2]*n)+'</div>';
+      out.appendChild(f);
+    });
+    if(perdidos.length)out.appendChild(el('div','vacio','No reconocí: '+perdidos.join(', ')));
+    out.appendChild(el('div','diario','<h4>🩺 Qué opino de esta comida</h4>'+
+      r.v.map(([i,t])=>'<div class="veredicto"><span class="ic">'+i+'</span><span>'+t+'</span></div>').join('')));
+    const g=el('button','btn','Guardar en mi día');
+    g.onclick=()=>{
+      const f=hoyClave(),d=comidas[f]||{items:[],agua:0};
+      encontrados.forEach(({a,n})=>d.items.push({nom:a[0],por:a[1],n:n,k:a[2],p:a[3],c:a[4],g:a[5],sat:a[6],az:a[7],so:a[8],fi:a[9],niv:a[10]}));
+      comidas[f]=d;grabar(KD.c,comidas);cerrar('#capaInfo');pintarDieta();avisar('Comida guardada');
+    };
+    out.appendChild(g);
+    out.appendChild(el('div','aviso-salud','Las cantidades son estimadas a partir de porciones estándar. Si quieres precisión, agrega los alimentos uno por uno.'));
+  };
+  c.appendChild(b);c.appendChild(out);
+  abrir('#capaInfo');
+}
+
+/* nivel de un producto según sus nutrientes por 100 g */
+function nivelDe(sat,az,so,fi,p){
+  let m=0;
+  if(sat>=5)m+=2;else if(sat>=2)m+=1;
+  if(az>=15)m+=2;else if(az>=7)m+=1;
+  if(so>=600)m+=2;else if(so>=300)m+=1;
+  if(fi>=4)m-=1;
+  if(p>=15)m-=1;
+  return m>=3?1:m>=1?2:3;
+}
+
+/* botones nuevos en Agregar comida */
+const aliPrev7=abrirAlimentos;
+abrirAlimentos=function(){
+  aliPrev7();
+  const c=$('#infoCuerpo');
+  const fila=document.createElement('div');
+  fila.style.cssText='display:flex;gap:8px;margin-bottom:12px';
+  const b1=el('button','btn fantasma','✍️ Escribir');
+  b1.style.margin='0';b1.onclick=()=>{cerrar('#capaInfo');setTimeout(abrirEscribir,280)};
+  const b2=el('button','btn fantasma','📷 Escanear');
+  b2.style.margin='0';b2.onclick=()=>{cerrar('#capaInfo');setTimeout(abrirEscaner,280)};
+  fila.appendChild(b1);fila.appendChild(b2);
+  c.insertBefore(fila,c.firstChild);
+};
+
+</script>
+<script>
+/* =========================================================
+   MÓDULO 8 — escáner de código de barras (Open Food Facts)
+   ========================================================= */
+const est8=document.createElement('style');
+est8.textContent=`
+.camara{position:relative;border-radius:var(--r);overflow:hidden;background:#000;margin-bottom:14px;aspect-ratio:4/3}
+.camara video{width:100%;height:100%;object-fit:cover;display:block}
+.camara .mira{position:absolute;inset:22% 12%;border:3px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 0 0 2000px rgba(0,0,0,.35)}
+.camara .est{position:absolute;left:0;right:0;bottom:0;padding:12px 14px;background:linear-gradient(to top,rgba(0,0,0,.75),transparent);color:#fff;font-size:14px;font-weight:600;text-align:center}
+`;
+document.head.appendChild(est8);
+
+let lectorZX=null,streamZX=null;
+async function abrirEscaner(){
+  $('#infoTitulo').textContent='Escanear producto';
+  const c=$('#infoCuerpo');c.innerHTML='';
+  const cam=el('div','camara','<video playsinline muted autoplay></video><div class="mira"></div><div class="est">Apunta al código de barras</div>');
+  c.appendChild(cam);
+  const manual=el('div','campo','<label class="etq">O escribe el código a mano</label><input id="bc-man" type="text" inputmode="numeric" placeholder="7501234567890">');
+  c.appendChild(manual);
+  const bm=el('button','btn fantasma','Buscar ese código');
+  bm.onclick=()=>{const v=$('#bc-man').value.trim();if(v.length>=8)buscarProducto(v);else avisar('Código muy corto')};
+  c.appendChild(bm);
+  abrir('#capaInfo');
+  const est=cam.querySelector('.est'),vid=cam.querySelector('video');
+  try{
+    const {BrowserMultiFormatReader}=await import('https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/+esm');
+    lectorZX=new BrowserMultiFormatReader();
+    const ctrl=await lectorZX.decodeFromVideoDevice(undefined,vid,(res,err,control)=>{
+      if(res){control.stop();cerrarCamara();buscarProducto(res.getText())}
+    });
+    streamZX=ctrl;
+  }catch(e){
+    est.textContent='No se pudo abrir la cámara. Usa el código a mano.';
+    cam.style.aspectRatio='auto';cam.style.padding='28px 16px';
+  }
+}
+function cerrarCamara(){
+  try{streamZX&&streamZX.stop&&streamZX.stop()}catch(e){}
+  try{lectorZX&&lectorZX.reset&&lectorZX.reset()}catch(e){}
+  document.querySelectorAll('.camara video').forEach(v=>{
+    if(v.srcObject){v.srcObject.getTracks().forEach(t=>t.stop());v.srcObject=null}
+  });
+  streamZX=null;
+}
+async function buscarProducto(codigo){
+  $('#infoTitulo').textContent='Buscando…';
+  const c=$('#infoCuerpo');c.innerHTML='<div class="vacio">Consultando la base de datos mundial de alimentos…</div>';
+  abrir('#capaInfo');
+  try{
+    const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(codigo)+'.json?fields=product_name,brands,nutriments,serving_size,quantity');
+    const j=await r.json();
+    if(!j.product||j.status===0){
+      c.innerHTML='';
+      c.appendChild(el('div','vacio','Ese producto no está en la base de datos.<br>Puedes agregarlo a mano desde la lista de alimentos.'));
+      const b=el('button','btn','Volver a la lista');b.onclick=()=>{cerrar('#capaInfo');setTimeout(abrirAlimentos,280)};
+      c.appendChild(b);return;
+    }
+    const p=j.product,n=p.nutriments||{};
+    const val=k=>+(n[k+'_100g']||0);
+    const a=[
+      (p.product_name||'Producto')+(p.brands?' · '+p.brands.split(',')[0]:''),
+      '100 g',
+      Math.round(val('energy-kcal')||val('energy')/4.184||0),
+      +val('proteins').toFixed(1),+val('carbohydrates').toFixed(1),+val('fat').toFixed(1),
+      +val('saturated-fat').toFixed(1),+val('sugars').toFixed(1),
+      Math.round(val('sodium')*1000||val('salt')*400),+val('fiber').toFixed(1)
+    ];
+    a[10]=nivelDe(a[6],a[7],a[8],a[9],a[3]);
+    a[11]=explicarProducto(a);
+    a[12]='';
+    if(!a[2]){c.innerHTML='';c.appendChild(el('div','vacio','Ese producto está en la base pero sin información nutricional.'));return}
+    fichaAlimento(a,ag=>{
+      const g=parseFloat(prompt('¿Cuántos gramos comiste de '+a[0]+'?','100'));
+      if(!(g>0&&g<=2000))return;
+      const n2=g/100;
+      const f=hoyClave(),d=comidas[f]||{items:[],agua:0};
+      d.items.push({nom:a[0],por:g+' g',n:1,k:a[2]*n2,p:a[3]*n2,c:a[4]*n2,g:a[5]*n2,
+        sat:a[6]*n2,az:a[7]*n2,so:a[8]*n2,fi:a[9]*n2,niv:a[10]});
+      comidas[f]=d;grabar(KD.c,comidas);cerrar('#capaInfo');pintarDieta();avisar('Producto agregado');
+    });
+  }catch(e){
+    c.innerHTML='';
+    c.appendChild(el('div','vacio','No hay conexión para consultar el producto. Intenta más tarde.'));
+  }
+}
+function explicarProducto(a){
+  const [nom,,k,p,cb,g,sat,az,so,fi,niv]=a;
+  const t=[];
+  if(sat>=5)t.push('Tiene '+sat+' g de grasa saturada por cada 100 g, que es bastante: esa es la grasa que sube el colesterol malo.');
+  else if(sat>=2)t.push('Grasa saturada moderada ('+sat+' g por 100 g).');
+  else t.push('Muy poca grasa saturada, eso juega a favor de tu corazón.');
+  if(az>=15)t.push('Trae '+az+' g de azúcar por cada 100 g, casi cuatro cucharaditas. Es de los productos que conviene dejar para de vez en cuando.');
+  else if(az>=7)t.push('Azúcar moderada ('+az+' g por 100 g).');
+  if(so>=600)t.push('Mucho sodio ('+so+' mg por 100 g): eso presiona el corazón y sube la presión arterial.');
+  if(p>=15)t.push('Buena proteína ('+p+' g), útil después de entrenar.');
+  if(fi>=4)t.push('Aporta fibra ('+fi+' g), que llena y ayuda a la digestión.');
+  return t.join(' ');
+}
+/* limpiar cámara al cerrar la capa */
+const cerrarInfoPrev8=$('#cerrarInfo').onclick;
+$('#cerrarInfo').onclick=()=>{cerrarCamara();cerrarInfoPrev8()};
+
+</script>
+<script>
+/* =========================================================
+   MÓDULO 9 — contar repeticiones con la cámara
+   Usa MediaPipe Pose, que corre dentro del navegador.
+   El video NO se sube a ningún lado: se procesa en el teléfono.
+   ========================================================= */
+const est9=document.createElement('style');
+est9.textContent=`
+#vision{position:fixed;inset:0;z-index:80;background:#0C0A18;display:none;flex-direction:column;max-width:540px;margin:0 auto}
+#vision.on{display:flex}
+#vision .vcab{display:flex;align-items:center;gap:12px;padding:calc(var(--st) + 14px) 18px 10px;color:#fff}
+#vision .vcab h2{flex:1;font-family:var(--disp);font-weight:800;font-size:19px;margin:0}
+#vision .vcerrar{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:18px}
+#vision .escenario{flex:1;position:relative;overflow:hidden}
+#vision video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+#vision canvas{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1)}
+#vision .cuenta{position:absolute;left:0;right:0;top:14px;text-align:center;color:#fff;pointer-events:none}
+#vision .cuenta .n{font-family:var(--disp);font-weight:800;font-size:88px;line-height:1;text-shadow:0 4px 24px rgba(0,0,0,.6);font-variant-numeric:tabular-nums}
+#vision .cuenta .l{font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.9;font-weight:600}
+#vision .feed{position:absolute;left:16px;right:16px;bottom:16px;background:rgba(12,10,24,.78);backdrop-filter:blur(10px);border-radius:18px;padding:14px 16px;color:#fff;font-size:14.5px;line-height:1.4;text-align:center;font-weight:500}
+#vision .vpie{padding:12px 18px calc(var(--sb) + 14px);display:flex;gap:8px}
+#vision .vpie button{flex:1;padding:14px;border-radius:100px;font-family:var(--disp);font-weight:700;font-size:15px}
+#vision .vpie .prim{background:#fff;color:#171340}
+#vision .vpie .sec{background:rgba(255,255,255,.16);color:#fff}
+#vision select{width:100%;background:rgba(255,255,255,.14);border:none;color:#fff;padding:13px 16px;border-radius:14px;font-size:15px;margin:0 0 4px}
+#vision select option{color:#171340}
+`;
+document.head.appendChild(est9);
+
+const EJVIS={
+ sentadilla:{n:'Sentadilla',art:[24,26,28],abajo:100,arriba:158,tip:'Baja hasta que el muslo quede paralelo al piso.',
+   corto:'Estás bajando poco. Intenta bajar más, hasta unos 90 grados de rodilla.'},
+ flexion:{n:'Flexión de pecho',art:[12,14,16],abajo:95,arriba:158,tip:'Baja el pecho hasta casi tocar el piso.',
+   corto:'Te falta bajar. El codo debe llegar a 90 grados.'},
+ curl:{n:'Curl de bíceps',art:[12,14,16],abajo:55,arriba:155,tip:'Sube hasta el hombro y baja estirando bien.',
+   corto:'No estás estirando el brazo abajo. Baja completo.'},
+ press:{n:'Press de hombros',art:[24,12,14],abajo:75,arriba:155,tip:'Sube hasta estirar los brazos arriba.',
+   corto:'Sube más, hasta estirar el codo.'},
+ zancada:{n:'Zancada',art:[24,26,28],abajo:105,arriba:160,tip:'Baja hasta que la rodilla de atrás casi toque.',
+   corto:'Baja un poco más en cada zancada.'}
+};
+function angulo(a,b,c){
+  const ab=[a.x-b.x,a.y-b.y],cb=[c.x-b.x,c.y-b.y];
+  const d=ab[0]*cb[0]+ab[1]*cb[1];
+  const m=Math.hypot(...ab)*Math.hypot(...cb);
+  if(!m)return 180;
+  return Math.acos(Math.max(-1,Math.min(1,d/m)))*180/Math.PI;
+}
+let visLand=null,visStream=null,visRAF=null,visOn=false;
+let visEj='sentadilla',visReps=0,visFase='arriba',visMin=180,visSerie=[];
+
+async function abrirVision(){
+  const v=$('#vision');v.classList.add('on');
+  visReps=0;visFase='arriba';visMin=180;visSerie=[];
+  $('#visN').textContent='0';
+  $('#visFeed').textContent='Cargando el detector… la primera vez tarda unos segundos.';
+  const vid=$('#visVid'),cv=$('#visCv'),cx=cv.getContext('2d');
+  try{
+    visStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+    vid.srcObject=visStream;await vid.play();
+  }catch(e){
+    $('#visFeed').textContent='No pude usar la cámara. Revisa que le hayas dado permiso a la app.';return;
+  }
+  try{
+    const vis=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14');
+    const fs=await vis.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+    visLand=await vis.PoseLandmarker.createFromOptions(fs,{
+      baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',delegate:'GPU'},
+      runningMode:'VIDEO',numPoses:1
+    });
+  }catch(e){
+    $('#visFeed').textContent='No se pudo cargar el detector. Necesitas internet la primera vez.';return;
+  }
+  $('#visFeed').textContent='Ponte de cuerpo entero frente a la cámara y empieza.';
+  visOn=true;
+  const HUESOS=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
+  let ultimo=-1;
+  const bucle=()=>{
+    if(!visOn)return;
+    if(vid.readyState>=2){
+      if(cv.width!==vid.videoWidth){cv.width=vid.videoWidth;cv.height=vid.videoHeight}
+      const t=performance.now();
+      if(t-ultimo>40){
+        ultimo=t;
+        const res=visLand.detectForVideo(vid,t);
+        cx.clearRect(0,0,cv.width,cv.height);
+        if(res.landmarks&&res.landmarks[0]){
+          const L=res.landmarks[0],W=cv.width,H=cv.height;
+          cx.strokeStyle='rgba(0,204,106,.9)';cx.lineWidth=Math.max(3,W/160);cx.lineCap='round';
+          HUESOS.forEach(([a,b])=>{
+            if(L[a].visibility<.4||L[b].visibility<.4)return;
+            cx.beginPath();cx.moveTo(L[a].x*W,L[a].y*H);cx.lineTo(L[b].x*W,L[b].y*H);cx.stroke();
+          });
+          cx.fillStyle='#fff';
+          L.forEach((p,i)=>{if(i>10&&p.visibility>.4){cx.beginPath();cx.arc(p.x*W,p.y*H,Math.max(3,W/200),0,7);cx.fill()}});
+          contar(L);
+        }
+      }
+    }
+    visRAF=requestAnimationFrame(bucle);
+  };
+  bucle();
+}
+function contar(L){
+  const cfg=EJVIS[visEj],[a,b,c]=cfg.art;
+  if(L[a].visibility<.4||L[b].visibility<.4||L[c].visibility<.4){
+    $('#visFeed').textContent='No te veo completo. Aléjate un poco para que quepa todo el cuerpo.';return;
+  }
+  const ang=angulo(L[a],L[b],L[c]);
+  if(ang<visMin)visMin=ang;
+  if(visFase==='arriba'&&ang<cfg.abajo){visFase='abajo'}
+  else if(visFase==='abajo'&&ang>cfg.arriba){
+    visFase='arriba';visReps++;
+    const prof=visMin;visSerie.push(Math.round(prof));visMin=180;
+    $('#visN').textContent=visReps;
+    try{navigator.vibrate&&navigator.vibrate(45)}catch(e){}
+    $('#visFeed').textContent=prof>cfg.abajo-6?('Repetición '+visReps+'. '+cfg.corto):('Repetición '+visReps+'. Buena profundidad, sigue así.');
+  }else if(visFase==='arriba'){
+    $('#visFeed').textContent=cfg.tip;
+  }
+}
+function cerrarVision(guardar){
+  visOn=false;cancelAnimationFrame(visRAF);
+  try{visStream&&visStream.getTracks().forEach(t=>t.stop())}catch(e){}
+  try{visLand&&visLand.close&&visLand.close()}catch(e){}
+  visLand=null;visStream=null;
+  $('#vision').classList.remove('on');
+  if(guardar&&visReps){
+    const mapa={sentadilla:'g11',flexion:'p6',curl:'b2',press:'h2',zancada:'g14'};
+    const id=mapa[visEj];
+    if(!sesion)iniciarSesion(null);
+    let b=sesion.ej.find(x=>x.ej===id);
+    if(!b){b={ej:id,descanso:ajustes.descanso,sets:[]};sesion.ej.push(b)}
+    b.sets.push({peso:'',reps:String(visReps),min:'',hecho:true});
+    guardarSesion();abrirEntrenamiento();
+    avisar(visReps+' repeticiones guardadas');
+  }
+}
+(function montarVision(){
+  const d=document.createElement('div');d.id='vision';
+  d.innerHTML='<div class="vcab"><button class="vcerrar" id="visX">✕</button><h2>Contador con cámara</h2></div>'+
+    '<div style="padding:0 18px 8px"><select id="visSel"></select></div>'+
+    '<div class="escenario"><video id="visVid" playsinline muted></video><canvas id="visCv"></canvas>'+
+    '<div class="cuenta"><div class="n" id="visN">0</div><div class="l">repeticiones</div></div>'+
+    '<div class="feed" id="visFeed">Preparando…</div></div>'+
+    '<div class="vpie"><button class="sec" id="visReset">Reiniciar</button><button class="prim" id="visSave">Guardar serie</button></div>';
+  document.body.appendChild(d);
+  const sel=$('#visSel');
+  Object.keys(EJVIS).forEach(k=>sel.innerHTML+='<option value="'+k+'">'+EJVIS[k].n+'</option>');
+  sel.onchange=()=>{visEj=sel.value;visReps=0;visFase='arriba';visMin=180;$('#visN').textContent='0';$('#visFeed').textContent=EJVIS[visEj].tip};
+  $('#visX').onclick=()=>cerrarVision(false);
+  $('#visReset').onclick=()=>{visReps=0;visFase='arriba';visMin=180;$('#visN').textContent='0'};
+  $('#visSave').onclick=()=>{if(!visReps){avisar('Todavía no hay repeticiones');return}cerrarVision(true)};
+})();
+
+/* entradas: herramientas y entrenamiento */
+const progPrev9=pintarProgreso;
+pintarProgreso=function(){
+  progPrev9();
+  const g=$('#v-progreso').querySelector('.herr');
+  if(g&&!g.dataset.cam){
+    g.dataset.cam='1';
+    const b=el('button',null,'<div class="e">🎥</div><b>Contar reps</b><small>Con la cámara</small>');
+    b.onclick=abrirVision;g.prepend(b);
+    const b2=el('button',null,'<div class="e">✍️</div><b>Analizar comida</b><small>Escríbela y te digo</small>');
+    b2.onclick=abrirEscribir;g.appendChild(b2);
+  }
+};
+const entPrev9=pintarEntrenamiento;
+pintarEntrenamiento=function(){
+  entPrev9();
+  const c=$('#entCuerpo');
+  if(c.querySelector('.btncam'))return;
+  const b=el('button','btn fantasma btncam','🎥  Contar repeticiones con la cámara');
+  b.onclick=abrirVision;
+  c.appendChild(b);
+};
+
+</script>
+<script>
+/* =========================================================
+   MÓDULO 10 — base de alimentos general
+   Se suma a la lista existente: comida internacional y del día a día.
+   ========================================================= */
+const ALIM_GEN=[
+['Pechuga de pollo a la parrilla','150 g',248,46,0,5.4,1.5,0,110,0,3,'Proteína magra de altísima calidad con muy poca grasa. De lo mejor para construir músculo.',''],
+['Salmón','150 g',310,34,0,19,4,0,90,0,3,'Cargado de omega-3, la grasa que protege el corazón y el cerebro y baja la inflamación. De los pescados más completos.',''],
+['Pavo','100 g',135,29,0,2,0.6,0,60,0,3,'Aún más magro que el pollo. Excelente proteína con casi nada de grasa.',''],
+['Tofu','100 g',145,16,3,9,1.3,1,12,2,3,'Proteína vegetal completa con calcio y hierro. Buena alternativa a la carne.',''],
+['Lentejas cocidas','1 taza',230,18,40,0.8,0.1,4,4,16,3,'Dieciséis gramos de fibra más proteína vegetal. Bajan el colesterol y llenan muchísimo.',''],
+['Garbanzos cocidos','1 taza',270,15,45,4,0.4,8,11,12,3,'Fibra, proteína y minerales. Sostienen la energía por horas sin disparar el azúcar.',''],
+['Frijoles negros','1 taza',227,15,41,0.9,0.2,1,2,15,3,'Fibra y proteína vegetal con hierro. De los alimentos más completos y baratos que existen.',''],
+['Quinoa cocida','1 taza',222,8,39,4,0.4,2,13,5,3,'Grano con proteína completa, algo raro en el mundo vegetal. Buena fibra y sin gluten.',''],
+['Pasta integral','1 taza',175,7,37,1,0.2,1,4,6,3,'La fibra del trigo entero hace que la energía dure más y no te dé bajón después.',''],
+['Pasta blanca','1 taza',220,8,43,1.3,0.2,1,2,2.5,2,'Buena energía para entrenar, pero sin fibra llena menos y el azúcar sube más rápido.','La versión integral trae el doble de fibra.'],
+['Arroz frito','1 taza',330,10,45,12,2.5,3,900,2,2,'El arroz está bien; lo pesado es el aceite y sobre todo la salsa de soya, que trae muchísimo sodio.',''],
+['Pan pita integral','1 unidad',170,6,35,1.5,0.3,1,340,5,3,'Buena fibra y práctico. Rellénalo con proteína y vegetales y tienes comida completa.',''],
+['Tortilla de maíz','2 unidades',120,3,25,1.5,0.2,0,20,3,3,'Maíz entero, con fibra y sin grasa añadida. Mejor base que el pan blanco.',''],
+['Hummus','3 cucharadas',105,4,9,7,1,0,180,3,3,'Garbanzo con aceite de oliva: grasa buena, fibra y proteína vegetal. Excelente para untar.',''],
+['Ensalada César con pollo','1 plato',480,30,12,34,8,3,900,3,2,'La lechuga y el pollo son buenos; el aderezo y los crotones son los que disparan grasa y sodio.','Pide el aderezo aparte y usa la mitad.'],
+['Sushi','8 piezas',350,12,60,6,1,10,700,2,2,'Pescado y arroz, buena base. El sodio de la salsa de soya es lo que hay que vigilar.',''],
+['Tacos de carne','2 unidades',400,22,35,20,7,3,760,4,2,'Tienen buena proteína, pero la carne grasosa y el queso suman bastante saturada.',''],
+['Pollo empanizado','1 porción',350,25,20,20,4,1,720,1,1,'El empanizado absorbe aceite y suma calorías vacías. La proteína sigue ahí, pero el paquete es pesado.','Al horno o a la plancha.'],
+['Yogur griego natural','1 taza',130,20,8,0.7,0.3,6,80,0,3,'El doble de proteína que el yogur normal, más probióticos. Excelente merienda.',''],
+['Requesón','media taza',110,12,4,5,3,4,450,0,3,'Mucha proteína de digestión lenta. Buen aliado antes de dormir.',''],
+['Queso cheddar','30 g',115,7,0.4,9,6,0,180,0,2,'Calcio y proteína, pero seis gramos de saturada en una tajadita. Cuida la cantidad.',''],
+['Leche de almendra sin azúcar','1 taza',40,1,2,3,0,0,180,1,3,'Muy pocas calorías, útil si no toleras la lactosa. Ojo: casi no aporta proteína.',''],
+['Huevos revueltos','2 unidades',180,12,2,13,4,1,180,0,2,'Proteína excelente. La cantidad de mantequilla o aceite decide si queda liviano o pesado.',''],
+['Avena con frutas','1 taza',280,8,50,5,1,18,10,7,3,'Fibra que baja el colesterol más el azúcar natural de la fruta. Uno de los mejores desayunos.',''],
+['Cereal azucarado','1 taza',150,2,34,1.5,0.5,14,220,1,1,'Casi puro azúcar y harina refinada. Te da energía 40 minutos y luego te deja con hambre.','Avena con fruta te sostiene toda la mañana.'],
+['Barra de proteína','1 unidad',220,20,22,7,3,10,150,3,2,'Práctica cuando no puedes comer, pero muchas traen tanto azúcar como un dulce. Revisa la etiqueta.',''],
+['Almendras','30 g',170,6,6,15,1,1,0,3.5,3,'Grasa buena, vitamina E y magnesio. Un puño al día es de las mejores meriendas que existen.',''],
+['Nueces','30 g',185,4,4,18,1.7,1,1,2,3,'De los pocos alimentos vegetales con omega-3. Excelentes para el cerebro y el corazón.',''],
+['Mantequilla de maní','2 cucharadas',190,8,6,16,3,3,140,2,2,'Buena grasa y proteína. Busca la que solo tenga maní y sal, sin azúcar ni aceites añadidos.',''],
+['Brócoli','1 taza',55,4,11,0.6,0.1,2,64,5,3,'De los vegetales más completos: fibra, vitamina C y compuestos que se estudian por su efecto protector.',''],
+['Espinaca','1 taza',7,1,1,0.1,0,0,24,0.7,3,'Hierro, folato y vitamina K por casi cero calorías. Échala a todo.',''],
+['Zanahoria','1 unidad',25,0.5,6,0.1,0,3,42,1.7,3,'Betacaroteno para la vista y la piel. Perfecta para picar en vez de frituras.',''],
+['Tomate','1 unidad',22,1,5,0.2,0,3,6,1.5,3,'Licopeno, un antioxidante asociado con protección cardiovascular. Casi cero calorías.',''],
+['Pepino','1 taza',16,1,4,0.1,0,2,2,0.5,3,'Casi pura agua y fibra. Llena el estómago sin sumar nada.',''],
+['Aguacate en tostada','1 rebanada',220,6,20,14,2.5,2,280,8,3,'Grasa buena del aguacate más fibra del pan integral. Desayuno que sostiene horas.',''],
+['Papa asada','1 unidad',160,4,37,0.2,0,2,17,4,3,'Muy saciante y con bastante potasio. El problema nunca fue la papa, fue el aceite.',''],
+['Arándanos','1 taza',85,1,21,0.5,0,15,1,3.6,3,'De las frutas con más antioxidantes y de las que menos suben el azúcar.',''],
+['Fresas','1 taza',50,1,12,0.5,0,7,1,3,3,'Mucha vitamina C, poca azúcar y buena fibra. De las mejores frutas si cuidas calorías.',''],
+['Uvas','1 taza',105,1,27,0.2,0,23,3,1.4,2,'Buenas, pero concentran bastante azúcar. Una taza es la porción.',''],
+['Sandía','1 taza',46,1,11,0.2,0,9,2,0.6,3,'Casi pura agua. Hidrata y llena con muy pocas calorías.',''],
+['Batido de proteína con leche','1 vaso',280,32,20,7,3,18,180,1,2,'Buena proteína después de entrenar. La leche entera y el guineo son los que suben las calorías.',''],
+['Sopa de vegetales','1 plato',120,4,20,3,0.5,6,700,5,3,'Llena mucho con pocas calorías y aporta fibra. Solo cuida el sodio del caldo.',''],
+['Ensalada con atún','1 plato',280,28,10,14,2,3,520,4,3,'Combinación casi perfecta: proteína magra, fibra y grasa buena del aceite de oliva.',''],
+['Pollo con arroz y ensalada','1 plato',550,40,55,15,3.5,4,700,5,3,'El plato bien armado: proteína, energía y vegetales en las proporciones correctas.',''],
+['Sándwich de jamón y queso','1 unidad',350,18,32,16,7,4,1100,2,1,'El jamón y el queso procesados disparan el sodio por encima de mil miligramos y traen bastante saturada.','Pan integral con pechuga de pavo y aguacate.'],
+['Hot dog','1 unidad',290,10,24,17,6,5,810,1,1,'Carne procesada, sodio alto y grasa saturada. De lo más pesado que hay en su tamaño.',''],
+['Papas fritas de bolsa','30 g',160,2,15,10,3,0,170,1,1,'Ultraprocesado diseñado para que no puedas parar. Casi nada de nutrientes.','Un puño de almendras da más energía y sí llena.'],
+['Galletas dulces','3 unidades',160,2,22,7,4,12,110,0.5,1,'Harina refinada, azúcar y grasa. Suman rápido y no sostienen nada.',''],
+['Dona','1 unidad',270,4,31,15,7,12,320,1,1,'Frita y azucarada. Combina lo peor: saturada alta y azúcar de golpe.',''],
+['Pastel de chocolate','1 porción',350,4,50,15,8,35,300,2,1,'Postre de verdad. No hay que eliminarlo, pero trátalo como postre y no como merienda diaria.',''],
+['Bebida energética','1 lata',160,0,40,0,0,40,200,0,1,'Azúcar y mucha cafeína. Sube el pulso y la presión, y el bajón después es fuerte.','Café negro da la cafeína sin el azúcar.'],
+['Vino','1 copa',125,0,4,0,0,1,5,0,2,'Con moderación no hace daño, pero el alcohol frena la recuperación muscular y empeora el sueño.',''],
+['Té verde','1 taza',2,0,0,0,0,0,2,0,3,'Antioxidantes y algo de cafeína, casi cero calorías. Buena opción a cualquier hora.','']
+];
+if(typeof ALIM!=='undefined'){
+  const ya=new Set(ALIM.map(a=>a[0]));
+  ALIM_GEN.forEach(a=>{if(!ya.has(a[0]))ALIM.push(a)});
+  ALIM.sort((a,b)=>a[0].localeCompare(b[0],'es'));
+}
 
 </script>
 </body>
