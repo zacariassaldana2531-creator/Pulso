@@ -4352,5 +4352,678 @@ abrirAnalizar=function(){
 };
 
 </script>
+<script>
+/* =========================================================
+   MÓDULO 16A — datos del generador de dietas
+   Todo separado para poder ampliarlo sin tocar la app.
+   Receta: {id, n, s(slot), k,p,c,g,sat,fi,so, t[tags], ing[]}
+   ing: 'Nombre|cantidad|categoría'
+   ========================================================= */
+const REC=[
+/* ---------- desayuno ---------- */
+{id:'d1',n:'Avena con guineo y maní',s:'desayuno',k:420,p:14,c:60,g:13,sat:2.5,fi:8,so:90,t:['facil','economico','vegetariano','fibra'],
+ ing:['Avena|40 g|cereales','Guineo|1 unidad|frutas','Mantequilla de maní|1 cda|grasas','Leche|200 ml|lacteos']},
+{id:'d2',n:'Huevos revueltos con pan integral y aguacate',s:'desayuno',k:450,p:22,c:32,g:26,sat:6,fi:9,so:520,t:['altaprot','facil'],
+ ing:['Huevos|2 unidades|proteinas','Pan integral|2 rebanadas|cereales','Aguacate|½ unidad|grasas']},
+{id:'d3',n:'Yogur griego con fresas y granola',s:'desayuno',k:380,p:26,c:42,g:10,sat:3,fi:6,so:120,t:['altaprot','facil','rapido'],
+ ing:['Yogur griego|200 g|lacteos','Fresas|1 taza|frutas','Granola|30 g|cereales']},
+{id:'d4',n:'Tortilla de claras con vegetales',s:'desayuno',k:260,p:28,c:12,g:10,sat:2.5,fi:4,so:380,t:['altaprot','bajacal','bajacarb'],
+ ing:['Claras de huevo|5 unidades|proteinas','Pimiento|1 unidad|vegetales','Espinaca|1 taza|vegetales','Aceite de oliva|1 cdita|grasas']},
+{id:'d5',n:'Batido de proteína con avena y maní',s:'desayuno',k:480,p:38,c:45,g:16,sat:4,fi:7,so:220,t:['altaprot','rapido','musculo'],
+ ing:['Proteína en polvo|1 scoop|proteinas','Avena|40 g|cereales','Mantequilla de maní|1 cda|grasas','Leche|250 ml|lacteos']},
+{id:'d6',n:'Pan integral con queso blanco y tomate',s:'desayuno',k:330,p:18,c:38,g:12,sat:5,fi:6,so:620,t:['economico','facil'],
+ ing:['Pan integral|2 rebanadas|cereales','Queso blanco fresco|50 g|lacteos','Tomate|1 unidad|vegetales']},
+{id:'d7',n:'Mangú con huevo hervido',s:'desayuno',k:400,p:14,c:50,g:14,sat:4.5,fi:5,so:450,t:['economico'],
+ ing:['Plátano verde|2 unidades|cereales','Huevos|2 unidades|proteinas','Cebolla|½ taza|vegetales']},
+{id:'d8',n:'Avena con manzana y canela',s:'desayuno',k:320,p:9,c:58,g:6,sat:1,fi:8,so:60,t:['economico','vegetariano','fibra','bajacal'],
+ ing:['Avena|50 g|cereales','Manzana|1 unidad|frutas','Leche|150 ml|lacteos']},
+{id:'d9',n:'Tostada de aguacate con huevo',s:'desayuno',k:400,p:16,c:30,g:24,sat:5,fi:9,so:480,t:['facil','corazon'],
+ ing:['Pan integral|2 rebanadas|cereales','Aguacate|½ unidad|grasas','Huevos|1 unidad|proteinas']},
+{id:'d10',n:'Panqueques de avena y guineo',s:'desayuno',k:430,p:16,c:62,g:12,sat:3,fi:7,so:300,t:['facil','vegetariano'],
+ ing:['Avena|50 g|cereales','Guineo|1 unidad|frutas','Huevos|2 unidades|proteinas']},
+/* ---------- media mañana ---------- */
+{id:'m1',n:'Manzana con almendras',s:'media',k:265,p:7,c:31,g:15,sat:1.2,fi:7,so:1,t:['facil','rapido','corazon','fibra'],
+ ing:['Manzana|1 unidad|frutas','Almendras|30 g|grasas']},
+{id:'m2',n:'Yogur natural con arándanos',s:'media',k:235,p:13,c:38,g:4.5,sat:2.5,fi:4,so:115,t:['facil','bajacal'],
+ ing:['Yogur natural|1 taza|lacteos','Arándanos|1 taza|frutas']},
+{id:'m3',n:'Guineo con mantequilla de maní',s:'media',k:295,p:9,c:33,g:16,sat:3,fi:5,so:145,t:['economico','rapido','musculo'],
+ ing:['Guineo|1 unidad|frutas','Mantequilla de maní|2 cdas|grasas']},
+{id:'m4',n:'Huevo hervido y mandarina',s:'media',k:120,p:7,c:12,g:5,sat:1.6,fi:2,so:75,t:['bajacal','economico','altaprot'],
+ ing:['Huevos|1 unidad|proteinas','Mandarina|1 unidad|frutas']},
+{id:'m5',n:'Nueces y pera',s:'media',k:285,p:5,c:31,g:18,sat:2,fi:8,so:3,t:['corazon','fibra'],
+ ing:['Nueces|30 g|grasas','Pera|1 unidad|frutas']},
+{id:'m6',n:'Batido de proteína con leche',s:'media',k:280,p:32,c:20,g:7,sat:3,fi:1,so:180,t:['altaprot','rapido','musculo'],
+ ing:['Proteína en polvo|1 scoop|proteinas','Leche|250 ml|lacteos']},
+/* ---------- almuerzo ---------- */
+{id:'a1',n:'Pollo a la plancha con arroz integral y ensalada',s:'almuerzo',k:620,p:45,c:62,g:16,sat:3.5,fi:8,so:520,t:['altaprot','equilibrado'],
+ ing:['Pechuga de pollo|150 g|proteinas','Arroz integral|1 taza|cereales','Lechuga|1 taza|vegetales','Tomate|1 unidad|vegetales','Aceite de oliva|1 cda|grasas']},
+{id:'a2',n:'Arroz con habichuelas y res guisada',s:'almuerzo',k:700,p:38,c:78,g:22,sat:6.5,fi:10,so:850,t:['economico'],
+ ing:['Arroz blanco|1 taza|cereales','Habichuelas rojas|1 taza|legumbres','Carne de res|120 g|proteinas']},
+{id:'a3',n:'Pescado al horno con batata y brócoli',s:'almuerzo',k:540,p:38,c:48,g:16,sat:3,fi:9,so:480,t:['corazon','equilibrado','fibra'],
+ ing:['Pescado blanco|150 g|proteinas','Batata|1 taza|cereales','Brócoli|1 taza|vegetales','Aceite de oliva|1 cda|grasas']},
+{id:'a4',n:'Ensalada de atún con garbanzos',s:'almuerzo',k:480,p:38,c:38,g:18,sat:2.5,fi:11,so:620,t:['altaprot','facil','fibra','economico'],
+ ing:['Atún en agua|2 latas|proteinas','Garbanzos|1 taza|legumbres','Lechuga|2 tazas|vegetales','Aceite de oliva|1 cda|grasas']},
+{id:'a5',n:'Pasta integral con pollo y vegetales',s:'almuerzo',k:620,p:42,c:68,g:16,sat:3.5,fi:9,so:540,t:['equilibrado','musculo'],
+ ing:['Pasta integral|100 g|cereales','Pechuga de pollo|130 g|proteinas','Calabacín|1 taza|vegetales']},
+{id:'a6',n:'Lentejas guisadas con arroz',s:'almuerzo',k:560,p:24,c:95,g:6,sat:0.8,fi:17,so:520,t:['economico','vegetariano','fibra'],
+ ing:['Lentejas|1 taza|legumbres','Arroz blanco|1 taza|cereales','Zanahoria|1 unidad|vegetales']},
+{id:'a7',n:'Bistec de res con yuca y ensalada',s:'almuerzo',k:640,p:40,c:58,g:22,sat:7,fi:6,so:560,t:['economico'],
+ ing:['Carne de res|150 g|proteinas','Yuca|1 taza|cereales','Lechuga|1 taza|vegetales']},
+{id:'a8',n:'Pechuga con puré de auyama y espinaca',s:'almuerzo',k:480,p:42,c:32,g:18,sat:4,fi:7,so:460,t:['altaprot','bajacal','bajacarb'],
+ ing:['Pechuga de pollo|150 g|proteinas','Auyama|1 taza|vegetales','Espinaca|1 taza|vegetales']},
+{id:'a9',n:'Tacos de pollo con frijoles',s:'almuerzo',k:600,p:38,c:58,g:22,sat:6,fi:12,so:780,t:['facil','fibra'],
+ ing:['Pechuga de pollo|120 g|proteinas','Tortilla de maíz|3 unidades|cereales','Frijoles negros|1 taza|legumbres']},
+{id:'a10',n:'Salmón con quinoa y espárragos',s:'almuerzo',k:660,p:42,c:48,g:28,sat:5.5,fi:9,so:420,t:['corazon','altaprot'],
+ ing:['Salmón|150 g|proteinas','Quinoa|1 taza|cereales','Brócoli|1 taza|vegetales']},
+/* ---------- merienda ---------- */
+{id:'s1',n:'Requesón con piña',s:'merienda',k:190,p:14,c:22,g:5,sat:3,fi:2,so:460,t:['altaprot','bajacal'],
+ ing:['Requesón|½ taza|lacteos','Piña|1 taza|frutas']},
+{id:'s2',n:'Zanahoria con hummus',s:'merienda',k:190,p:6,c:20,g:10,sat:1.5,fi:7,so:280,t:['vegetariano','fibra','bajacal'],
+ ing:['Zanahoria|2 unidades|vegetales','Hummus|3 cdas|grasas']},
+{id:'s3',n:'Yogur griego con miel',s:'merienda',k:220,p:20,c:24,g:2,sat:1,fi:0,so:85,t:['altaprot','rapido'],
+ ing:['Yogur griego|200 g|lacteos','Miel|1 cda|grasas']},
+{id:'s4',n:'Tostada integral con atún',s:'merienda',k:240,p:22,c:16,g:8,sat:1.5,fi:4,so:520,t:['altaprot','economico'],
+ ing:['Pan integral|1 rebanada|cereales','Atún en agua|1 lata|proteinas']},
+{id:'s5',n:'Batido de fresa y avena',s:'merienda',k:260,p:8,c:45,g:5,sat:1,fi:6,so:90,t:['facil','vegetariano'],
+ ing:['Fresas|1 taza|frutas','Avena|30 g|cereales','Leche|200 ml|lacteos']},
+{id:'s6',n:'Pistachos',s:'merienda',k:160,p:6,c:8,g:13,sat:1.6,fi:3,so:0,t:['rapido','corazon','bajacarb'],
+ ing:['Pistachos|30 g|grasas']},
+/* ---------- cena ---------- */
+{id:'c1',n:'Pechuga al horno con vegetales salteados',s:'cena',k:420,p:44,c:18,g:18,sat:3.5,fi:6,so:480,t:['altaprot','bajacarb','bajacal'],
+ ing:['Pechuga de pollo|150 g|proteinas','Calabacín|1 taza|vegetales','Pimiento|1 unidad|vegetales','Aceite de oliva|1 cda|grasas']},
+{id:'c2',n:'Sopa de pollo con vegetales y pan integral',s:'cena',k:400,p:28,c:40,g:12,sat:2.5,fi:7,so:900,t:['economico','facil'],
+ ing:['Pechuga de pollo|100 g|proteinas','Zanahoria|1 unidad|vegetales','Apio|1 taza|vegetales','Pan integral|1 rebanada|cereales']},
+{id:'c3',n:'Tortilla de huevo con espinaca y queso',s:'cena',k:380,p:26,c:8,g:26,sat:9,fi:3,so:620,t:['bajacarb','rapido','altaprot'],
+ ing:['Huevos|3 unidades|proteinas','Espinaca|1 taza|vegetales','Queso mozzarella|30 g|lacteos']},
+{id:'c4',n:'Pescado blanco con ensalada y aguacate',s:'cena',k:420,p:32,c:16,g:24,sat:4,fi:9,so:420,t:['corazon','bajacarb','altaprot'],
+ ing:['Pescado blanco|150 g|proteinas','Lechuga|2 tazas|vegetales','Aguacate|½ unidad|grasas']},
+{id:'c5',n:'Revuelto de tofu con vegetales',s:'cena',k:350,p:24,c:22,g:18,sat:2.5,fi:7,so:480,t:['vegetariano','fibra','bajacal'],
+ ing:['Tofu|150 g|proteinas','Brócoli|1 taza|vegetales','Pimiento|1 unidad|vegetales']},
+{id:'c6',n:'Ensalada de pollo con aguacate',s:'cena',k:450,p:38,c:16,g:26,sat:5,fi:8,so:460,t:['altaprot','bajacarb','facil'],
+ ing:['Pechuga de pollo|130 g|proteinas','Lechuga|2 tazas|vegetales','Aguacate|½ unidad|grasas','Tomate|1 unidad|vegetales']},
+{id:'c7',n:'Yuca con huevo y ensalada',s:'cena',k:420,p:16,c:52,g:16,sat:4,fi:6,so:320,t:['economico','vegetariano'],
+ ing:['Yuca|1 taza|cereales','Huevos|2 unidades|proteinas','Lechuga|1 taza|vegetales']},
+{id:'c8',n:'Crema de auyama con pollo desmenuzado',s:'cena',k:380,p:30,c:26,g:16,sat:5,fi:5,so:700,t:['facil','bajacal'],
+ ing:['Auyama|1 taza|vegetales','Pechuga de pollo|120 g|proteinas','Leche|100 ml|lacteos']}
+];
+
+/* ---------- objetivos ---------- */
+const OBJ=[
+{id:'bajar',e:'🔥',n:'Bajar de peso',d:'Déficit calórico moderado, con proteína alta para cuidar el músculo.',ajK:0.82,prot:1.9,gras:0.8,pref:['bajacal','altaprot','fibra'],col:'Pecho'},
+{id:'mantener',e:'⚖️',n:'Mantener el peso',d:'Tus calorías de mantenimiento, con macros equilibrados.',ajK:1,prot:1.6,gras:0.9,pref:['equilibrado'],col:'Hombros'},
+{id:'proteina',e:'💪',n:'Alta en proteína',d:'Prioriza la proteína en cada comida, sin cambiar mucho las calorías.',ajK:1,prot:2.1,gras:0.8,pref:['altaprot'],col:'Espalda'},
+{id:'bajacal',e:'🥗',n:'Baja en calorías',d:'Comidas de mucho volumen y pocas calorías, para saciar comiendo menos.',ajK:0.78,prot:1.7,gras:0.7,pref:['bajacal','fibra'],col:'Cardio'},
+{id:'protbajacal',e:'🍗',n:'Alta en proteína y baja en calorías',d:'Combinación pensada para perder grasa manteniendo el músculo.',ajK:0.8,prot:2.2,gras:0.7,pref:['altaprot','bajacal'],col:'Bíceps'},
+{id:'equilibrado',e:'⚡',n:'Alimentación equilibrada',d:'Reparto clásico, sin extremos, con buena variedad.',ajK:1,prot:1.6,gras:0.9,pref:['equilibrado','fibra'],col:'Piernas'},
+{id:'entreno',e:'🏋️',n:'Para acompañar el entrenamiento',d:'Más carbohidratos alrededor del entrenamiento y buena proteína.',ajK:1.05,prot:1.9,gras:0.8,pref:['musculo','equilibrado'],col:'Tríceps'},
+{id:'masa',e:'💪',n:'Ganancia de masa muscular',d:'Superávit calórico moderado con proteína alta.',ajK:1.12,prot:2,gras:0.9,pref:['musculo','altaprot'],col:'Espalda'},
+{id:'bajacarb',e:'🥑',n:'Baja en carbohidratos',d:'Menos carbohidratos, más proteína y grasa buena.',ajK:0.95,prot:2,gras:1.2,pref:['bajacarb','altaprot'],col:'Core'},
+{id:'corazon',e:'❤️',n:'Enfocada en salud cardiovascular',d:'Prioriza grasas insaturadas, fibra y menos sodio.',ajK:1,prot:1.6,gras:1,pref:['corazon','fibra'],col:'Pecho'},
+{id:'fibra',e:'🌱',n:'Más fibra y vegetales',d:'Sube la fibra con legumbres, frutas y vegetales.',ajK:0.95,prot:1.5,gras:0.9,pref:['fibra','vegetariano'],col:'Cardio'}
+];
+
+/* ---------- estilos de plan (las variantes) ---------- */
+const ESTILOS=[
+{id:'proteina',n:'Alto en proteína',d:'Prioriza las comidas con más proteína por caloría.',peso:{altaprot:3,musculo:2}},
+{id:'economico',n:'Económico',d:'Ingredientes accesibles y de uso común.',peso:{economico:3,facil:1}},
+{id:'facil',n:'Comidas fáciles',d:'Preparaciones rápidas, de pocos pasos.',peso:{facil:3,rapido:3}},
+{id:'variedad',n:'Variedad',d:'Cambia de comida todos los días, sin repetir.',peso:{},variar:true},
+{id:'simple',n:'Sin complicaciones',d:'Pocas recetas que se repiten. Menos compras y menos pensar.',peso:{facil:2,economico:1},repetir:true}
+];
+
+/* ---------- sustituciones equivalentes ---------- */
+const EQUIV=[
+ ['Pechuga de pollo','Pescado blanco','Pavo','Atún en agua','Tofu'],
+ ['Arroz blanco','Papa','Batata','Yuca','Arroz integral'],
+ ['Yogur natural','Leche','Yogur griego','Requesón'],
+ ['Carne de res','Lomo de cerdo','Pechuga de pollo','Salmón'],
+ ['Habichuelas rojas','Frijoles negros','Lentejas','Garbanzos'],
+ ['Avena','Pan integral','Granola','Cereal integral'],
+ ['Almendras','Nueces','Pistachos','Maní'],
+ ['Guineo','Manzana','Pera','Mandarina','Fresas']
+];
+const CATS={proteinas:['🥩','Proteínas'],vegetales:['🥦','Vegetales'],frutas:['🍎','Frutas'],
+ cereales:['🍚','Cereales y carbohidratos'],legumbres:['🫘','Legumbres'],lacteos:['🥛','Lácteos'],
+ grasas:['🥑','Grasas y otros']};
+const SLOTS={desayuno:'Desayuno',media:'Media mañana',almuerzo:'Almuerzo',merienda:'Merienda',cena:'Cena'};
+
+</script>
+<script>
+/* =========================================================
+   MÓDULO 16B — generador de planes
+   ========================================================= */
+const KDT={plan:'pulso.plandieta',pref:'pulso.prefdieta'};
+let planDieta=leer(KDT.plan,null);
+let prefDieta=leer(KDT.pref,{no:[],si:[],comidas:4,cocina:'si',presupuesto:'medio',evitar:[]});
+
+const REPARTO={
+ 3:{desayuno:.30,almuerzo:.40,cena:.30},
+ 4:{desayuno:.26,almuerzo:.36,merienda:.14,cena:.24},
+ 5:{desayuno:.22,media:.12,almuerzo:.32,merienda:.12,cena:.22},
+ 2:{almuerzo:.55,cena:.45}
+};
+function objetivosDe(obj){
+  const base=perfil?calcularPlan(perfil):{kcal:2000,prot:120};
+  const peso=perfil?perfil.peso:70;
+  const o=OBJ.find(x=>x.id===obj)||OBJ[1];
+  let kcal=Math.round(base.tdee?base.tdee*o.ajK:base.kcal*o.ajK);
+  const piso=perfil&&perfil.sexo==='m'?1200:1500;
+  let ajustado=false;
+  if(kcal<piso){kcal=piso;ajustado=true}
+  const prot=Math.round(peso*o.prot);
+  const gras=Math.round(peso*o.gras);
+  const carb=Math.max(50,Math.round((kcal-prot*4-gras*9)/4));
+  const fi=kcal>=2200?30:25;
+  return {kcal,prot,gras,carb,fi,sat:Math.round(kcal*0.1/9),so:2300,o,ajustado,piso};
+}
+function puntuar(r,meta,est,objId){
+  let s=0;
+  const o=OBJ.find(x=>x.id===objId);
+  (o?o.pref:[]).forEach(t=>{if(r.t.includes(t))s+=2.5});
+  Object.keys(est.peso||{}).forEach(t=>{if(r.t.includes(t))s+=est.peso[t]});
+  s+=(r.p/Math.max(1,r.k))*40;                    // densidad de proteína
+  s+=(r.fi/Math.max(1,r.k))*120;                  // densidad de fibra
+  if(r.sat>8)s-=1.5;
+  if(r.so>800)s-=1;
+  if(prefDieta.si.includes(r.id))s+=4;
+  return s;
+}
+function generarPlan(objId,dias,nComidas,estId,semilla){
+  const meta=objetivosDe(objId);
+  const est=ESTILOS.find(e=>e.id===estId)||ESTILOS[3];
+  const rep=REPARTO[nComidas]||REPARTO[4];
+  const slots=Object.keys(rep);
+  const disp={};
+  slots.forEach(s=>{
+    let l=REC.filter(r=>r.s===s&&!prefDieta.no.includes(r.id));
+    if(!l.length)l=REC.filter(r=>r.s===s);
+    l=l.map(r=>({r:r,p:puntuar(r,meta,est,objId)})).sort((a,b)=>b.p-a.p).map(x=>x.r);
+    disp[s]=l;
+  });
+  const plan={obj:objId,est:estId,dias:dias,nComidas:nComidas,meta:meta,creado:Date.now(),d:[]};
+  for(let d=0;d<dias;d++){
+    const dia={comidas:[]};
+    slots.forEach((s,si)=>{
+      const l=disp[s];
+      let idx;
+      if(est.repetir)idx=(si+semilla)%Math.min(2,l.length);
+      else if(est.variar)idx=(d+si+semilla)%l.length;
+      else idx=(d*1+semilla+si)%Math.min(l.length,Math.max(3,Math.ceil(l.length*0.6)));
+      const r=l[idx]||l[0];
+      const objetivoK=meta.kcal*rep[s];
+      let f=objetivoK/r.k;
+      f=Math.max(0.6,Math.min(1.8,Math.round(f*4)/4));
+      dia.comidas.push({s:s,id:r.id,f:f});
+    });
+    plan.d.push(dia);
+  }
+  return plan;
+}
+function nutriComida(c){
+  const r=REC.find(x=>x.id===c.id);if(!r)return null;
+  const f=c.f||1;
+  return {n:r.n,r:r,f:f,k:Math.round(r.k*f),p:Math.round(r.p*f),c:Math.round(r.c*f),
+    g:Math.round(r.g*f),sat:+(r.sat*f).toFixed(1),fi:Math.round(r.fi*f),so:Math.round(r.so*f)};
+}
+function totalDiaPlan(dia){
+  const t={k:0,p:0,c:0,g:0,sat:0,fi:0,so:0};
+  dia.comidas.forEach(c=>{const n=nutriComida(c);if(!n)return;
+    t.k+=n.k;t.p+=n.p;t.c+=n.c;t.g+=n.g;t.sat+=n.sat;t.fi+=n.fi;t.so+=n.so});
+  t.sat=+t.sat.toFixed(1);
+  return t;
+}
+/* alternativas nutricionalmente parecidas */
+function alternativas(id){
+  const r=REC.find(x=>x.id===id);if(!r)return [];
+  return REC.filter(x=>x.s===r.s&&x.id!==id&&!prefDieta.no.includes(x.id))
+    .map(x=>({r:x,d:Math.abs(x.k-r.k)/r.k*2+Math.abs(x.p-r.p)/Math.max(1,r.p)}))
+    .sort((a,b)=>a.d-b.d).map(x=>x.r).slice(0,6);
+}
+/* lista de compras */
+function listaCompras(plan){
+  const acum={};
+  plan.d.forEach(dia=>dia.comidas.forEach(c=>{
+    const r=REC.find(x=>x.id===c.id);if(!r)return;
+    r.ing.forEach(s=>{
+      const [nom,cant,cat]=s.split('|');
+      const m=cant.match(/^([\d.,½¼¾]+)\s*(.*)$/);
+      let num=1,uni=cant;
+      if(m){
+        num=m[1]==='½'?0.5:m[1]==='¼'?0.25:m[1]==='¾'?0.75:parseFloat(m[1].replace(',','.'))||1;
+        uni=m[2]||'';
+      }
+      const k=cat+'|'+nom+'|'+uni;
+      acum[k]=(acum[k]||0)+num*(c.f||1);
+    });
+  }));
+  const out={};
+  Object.keys(acum).forEach(k=>{
+    const [cat,nom,uni]=k.split('|');
+    let v=acum[k];
+    v=v>=10?Math.round(v):Math.round(v*2)/2;
+    (out[cat]=out[cat]||[]).push({nom:nom,cant:v+(uni?' '+uni:'')});
+  });
+  Object.keys(out).forEach(c=>out[c].sort((a,b)=>a.nom.localeCompare(b.nom,'es')));
+  return out;
+}
+/* qué comer con lo que te queda */
+function sugerirComidas(restK,restP){
+  return REC.map(r=>({r:r,
+    d:Math.abs(r.k-restK)/Math.max(100,restK)+(restP>0?Math.max(0,restP-r.p)/Math.max(1,restP):0)}))
+   .filter(x=>x.r.k<=restK*1.25&&!prefDieta.no.includes(x.r.id))
+   .sort((a,b)=>a.d-b.d).slice(0,4).map(x=>x.r);
+}
+
+</script>
+<script>
+/* =========================================================
+   MÓDULO 16C — interfaz de "Crea tu dieta"
+   ========================================================= */
+const est16=document.createElement('style');
+est16.textContent=`
+.obj-card{display:flex;align-items:center;gap:13px;border-radius:20px;padding:16px;margin-bottom:9px;color:#fff;width:100%;text-align:left;background:linear-gradient(135deg,var(--c),var(--c2));box-shadow:var(--sombra-c)}
+.obj-card .em{font-size:26px;flex:0 0 auto}
+.obj-card b{display:block;font-family:var(--disp);font-weight:800;font-size:16.5px;letter-spacing:-.02em}
+.obj-card small{font-size:12.5px;opacity:.93;line-height:1.35;display:block;margin-top:2px}
+.plan-op{background:var(--blanco);border-radius:20px;padding:16px;margin-bottom:10px;box-shadow:var(--sombra);width:100%;text-align:left}
+.plan-op b{font-family:var(--disp);font-weight:800;font-size:17px;display:block}
+.plan-op small{color:var(--tenue);font-size:13px;display:block;margin:2px 0 9px}
+.plan-op .mini{display:flex;gap:12px;font-size:12.5px;color:var(--tinta);padding:0}
+.plan-op .mini i{font-style:normal;font-weight:700;font-family:var(--disp)}
+.dia-tabs{display:flex;gap:7px;overflow-x:auto;padding:2px 20px 12px;margin:0 -20px;scrollbar-width:none}
+.dia-tabs::-webkit-scrollbar{display:none}
+.dia-tab{flex:0 0 auto;padding:9px 15px;border-radius:100px;background:var(--blanco);font-size:13.5px;font-weight:600;color:var(--tenue);box-shadow:0 3px 10px rgba(23,19,64,.06)}
+.dia-tab.on{background:#171340;color:#fff}
+.comida-card{background:var(--blanco);border-radius:20px;padding:16px;margin-bottom:10px;box-shadow:var(--sombra)}
+.comida-card .slot{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--tenue)}
+.comida-card h4{font-family:var(--disp);font-weight:800;font-size:17.5px;letter-spacing:-.02em;margin:4px 0 10px;line-height:1.2}
+.macros-min{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.macros-min span{font-size:12px;font-weight:600;background:var(--fondo);padding:6px 11px;border-radius:100px}
+.comida-acc{display:flex;gap:7px}
+.comida-acc button{flex:1;padding:10px;border-radius:100px;background:var(--fondo);font-size:13px;font-weight:600}
+.comida-acc .no{color:#C0405C}
+.comida-acc .si.on{background:#FFE3EA;color:#C0405C}
+.resumen{border-radius:22px;padding:18px;color:#fff;background:linear-gradient(135deg,#7B5CFF,#FF4D6D 60%,#FF8A3D);margin-bottom:14px}
+.resumen h4{font-family:var(--disp);font-weight:800;font-size:18px;margin:0 0 12px}
+.res-fila{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:14px}
+.res-fila .et{width:96px;flex:0 0 auto;opacity:.9;font-size:13px}
+.res-fila .bb{flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.28);overflow:hidden}
+.res-fila .bb i{display:block;height:100%;background:#fff;border-radius:4px}
+.res-fila .vv{width:88px;text-align:right;font-family:var(--disp);font-weight:700;font-size:13.5px}
+.lista-cat{margin-bottom:16px}
+.lista-cat h4{font-family:var(--disp);font-weight:800;font-size:16px;margin:0 0 8px}
+.lista-item{display:flex;align-items:center;gap:11px;background:var(--blanco);border-radius:14px;padding:12px 14px;margin-bottom:7px;box-shadow:0 3px 10px rgba(23,19,64,.05)}
+.lista-item .ck{width:22px;height:22px;border-radius:7px;border:2px solid var(--linea);flex:0 0 auto}
+.lista-item.on .ck{background:#00CC6A;border-color:#00CC6A}
+.lista-item.on b{text-decoration:line-through;opacity:.5}
+.lista-item b{flex:1;font-size:14.5px;font-weight:600}
+.lista-item small{color:var(--tenue);font-size:13px}
+`;
+document.head.appendChild(est16);
+
+/* -------- paso 1: objetivo -------- */
+function abrirCrearDieta(){
+  $('#infoTitulo').textContent='Crea tu dieta';
+  const c=$('#infoCuerpo');c.innerHTML='';
+  c.appendChild(el('div','dr','<h4>🥗 ¿Qué quieres lograr?</h4>Elige tu objetivo y te ayudamos a armar un plan de alimentación adaptado a ti. Puedes cambiarlo cuando quieras.'));
+  OBJ.forEach(o=>{
+    const b=el('button','obj-card');pintaColor(b,o.col);
+    b.innerHTML='<span class="em">'+o.e+'</span><span class="crece"><b>'+o.n+'</b><small>'+o.d+'</small></span><span>›</span>';
+    b.onclick=()=>pasoComidas(o.id);
+    c.appendChild(b);
+  });
+  if(!perfil)c.appendChild(el('div','aviso-salud','Sin tu peso y altura usamos valores promedio. Llena tu perfil para que las cantidades se ajusten mejor a ti.'));
+  abrir('#capaInfo');
+}
+/* -------- paso 2: comidas al día -------- */
+function pasoComidas(objId){
+  const o=OBJ.find(x=>x.id===objId);
+  $('#infoTitulo').textContent=o.n;
+  const c=$('#infoCuerpo');c.innerHTML='';
+  c.appendChild(el('div','etq','¿Cuántas comidas quieres hacer al día?'));
+  [[2,'2 comidas','Almuerzo y cena'],[3,'3 comidas','Desayuno, almuerzo y cena'],
+   [4,'4 comidas','Con una merienda'],[5,'5 comidas','Con dos meriendas']].forEach(([n,t,d])=>{
+    const b=el('button','plan-op','<b>'+t+'</b><small>'+d+'</small>');
+    b.onclick=()=>pasoDuracion(objId,n);
+    c.appendChild(b);
+  });
+  abrir('#capaInfo');
+}
+/* -------- paso 3: duración -------- */
+function pasoDuracion(objId,nCom){
+  $('#infoTitulo').textContent='¿Para cuántos días?';
+  const c=$('#infoCuerpo');c.innerHTML='';
+  [[1,'1 día','Para probar cómo funciona'],[3,'3 días','Un plan corto'],
+   [7,'7 días','Una semana completa'],[14,'14 días','Dos semanas, con más variedad']].forEach(([n,t,d])=>{
+    const b=el('button','plan-op','<b>'+t+'</b><small>'+d+'</small>');
+    b.onclick=()=>pasoEstilos(objId,nCom,n);
+    c.appendChild(b);
+  });
+  abrir('#capaInfo');
+}
+/* -------- paso 4: elegir entre varias propuestas -------- */
+function pasoEstilos(objId,nCom,dias){
+  $('#infoTitulo').textContent='Elige tu plan';
+  const c=$('#infoCuerpo');c.innerHTML='';
+  const meta=objetivosDe(objId);
+  c.appendChild(el('div','dr','<h4>Tu objetivo diario aproximado</h4>'+
+    '<b>'+meta.kcal+' kcal</b> · '+meta.prot+' g de proteína · '+meta.carb+' g de carbohidratos · '+meta.gras+' g de grasa'+
+    (meta.ajustado?'<p style="margin-top:8px;color:var(--tenue);font-size:13px">Ajustamos hacia arriba hasta '+meta.piso+' kcal: bajar de ahí no es recomendable.</p>':'')+
+    '<p style="margin-top:8px;color:var(--tenue);font-size:13px">Son estimaciones. Este plan busca '+
+    (meta.o.ajK<1?'un déficit calórico moderado':meta.o.ajK>1?'un superávit calórico moderado':'mantener tus calorías')+'.</p>'));
+  c.appendChild(el('div','etq','5 formas de lograrlo'));
+  ESTILOS.forEach((e,i)=>{
+    const p=generarPlan(objId,dias,nCom,e.id,i);
+    const t=totalDiaPlan(p.d[0]);
+    const b=el('button','plan-op');
+    b.innerHTML='<b>Plan '+(i+1)+' — '+e.n+'</b><small>'+e.d+'</small>'+
+      '<div class="mini"><span><i>'+t.k+'</i> kcal</span><span><i>'+t.p+'</i> g prot</span>'+
+      '<span><i>'+t.c+'</i> g carb</span><span><i>'+t.fi+'</i> g fibra</span></div>';
+    b.onclick=()=>verPlan(p);
+    c.appendChild(b);
+  });
+  abrir('#capaInfo');
+}
+/* -------- ver y ajustar el plan -------- */
+let diaVer=0;
+function verPlan(plan,guardado){
+  diaVer=Math.min(diaVer,plan.dias-1);
+  const o=OBJ.find(x=>x.id===plan.obj);
+  $('#infoTitulo').textContent=o.n;
+  const c=$('#infoCuerpo');c.innerHTML='';
+  if(plan.dias>1){
+    const tabs=el('div','dia-tabs');
+    const nom=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+    for(let i=0;i<plan.dias;i++){
+      const t=el('button','dia-tab'+(i===diaVer?' on':''),plan.dias<=7?nom[i]:'Día '+(i+1));
+      t.onclick=()=>{diaVer=i;verPlan(plan,guardado)};
+      tabs.appendChild(t);
+    }
+    c.appendChild(tabs);
+  }
+  const dia=plan.d[diaVer],t=totalDiaPlan(dia),m=plan.meta;
+  const res=el('div','resumen');
+  const fila=(et,v,meta,uni)=>'<div class="res-fila"><div class="et">'+et+'</div><div class="bb"><i style="width:'+Math.min(100,v/meta*100)+'%"></i></div><div class="vv">'+v+' / '+meta+uni+'</div></div>';
+  res.innerHTML='<h4>Total del día</h4>'+
+    fila('🔥 Calorías',t.k,m.kcal,'')+fila('💪 Proteína',t.p,m.prot,' g')+
+    fila('🍚 Carbohidratos',t.c,m.carb,' g')+fila('🥑 Grasa',t.g,m.gras,' g')+
+    fila('🥬 Fibra',t.fi,m.fi,' g')+
+    '<p style="font-size:12.5px;opacity:.9;margin-top:8px">Valores estimados. No hace falta clavar los números: acercarse la mayoría de los días es lo que cuenta.</p>';
+  c.appendChild(res);
+  dia.comidas.forEach((cm,i)=>{
+    const n=nutriComida(cm);if(!n)return;
+    const card=el('div','comida-card');
+    card.innerHTML='<div class="slot">'+SLOTS[cm.s]+'</div><h4>'+n.n+'</h4>'+
+      '<div class="macros-min"><span>🔥 '+n.k+' kcal</span><span>💪 '+n.p+' g</span>'+
+      '<span>🍚 '+n.c+' g</span><span>🥑 '+n.g+' g</span><span>Sat '+n.sat+' g</span>'+
+      '<span>🥬 '+n.fi+' g</span><span>Na '+n.so+' mg</span></div>';
+    const acc=el('div','comida-acc');
+    const cambiar=el('button',null,'🔄 Cambiar');
+    cambiar.onclick=()=>cambiarComida(plan,diaVer,i,guardado);
+    const noG=el('button','no'+(prefDieta.no.includes(cm.id)?' si on':''),'👎 No me gusta');
+    noG.onclick=()=>{
+      if(!prefDieta.no.includes(cm.id))prefDieta.no.push(cm.id);
+      prefDieta.si=prefDieta.si.filter(x=>x!==cm.id);
+      grabar(KDT.pref,prefDieta);
+      const alt=alternativas(cm.id)[0];
+      if(alt){cm.id=alt.id;cm.f=Math.max(0.6,Math.min(1.8,Math.round((plan.meta.kcal*(REPARTO[plan.nComidas]||REPARTO[4])[cm.s]/alt.k)*4)/4));}
+      if(guardado)grabar(KDT.plan,plan);
+      avisar('Anotado, no te lo proponemos más');
+      verPlan(plan,guardado);
+    };
+    const siG=el('button',(prefDieta.si.includes(cm.id)?'si on':'si'),'❤️ Me gusta');
+    siG.onclick=()=>{
+      if(!prefDieta.si.includes(cm.id))prefDieta.si.push(cm.id);
+      prefDieta.no=prefDieta.no.filter(x=>x!==cm.id);
+      grabar(KDT.pref,prefDieta);avisar('Lo tendremos en cuenta');verPlan(plan,guardado);
+    };
+    acc.appendChild(cambiar);acc.appendChild(siG);acc.appendChild(noG);
+    card.appendChild(acc);
+    c.appendChild(card);
+  });
+  const bc=el('button','btn','🛒  Crear lista de compras');
+  bc.onclick=()=>verLista(plan);
+  c.appendChild(bc);
+  if(!guardado){
+    const g=el('button','btn fantasma','Usar este plan');
+    g.onclick=()=>{planDieta=plan;grabar(KDT.plan,plan);cerrar('#capaInfo');pintarDieta();avisar('Plan activado')};
+    c.appendChild(g);
+  }else{
+    const q=el('button','btn peligro','Quitar este plan');
+    q.onclick=()=>{if(!confirm('¿Quitar el plan activo?'))return;planDieta=null;localStorage.removeItem(KDT.plan);cerrar('#capaInfo');pintarDieta()};
+    c.appendChild(q);
+  }
+  abrir('#capaInfo');
+}
+function cambiarComida(plan,d,i,guardado){
+  const cm=plan.d[d].comidas[i];
+  $('#infoTitulo').textContent='Cambiar '+SLOTS[cm.s].toLowerCase();
+  const c=$('#infoCuerpo');c.innerHTML='';
+  c.appendChild(el('div','dr','<h4>🔄 Opciones parecidas</h4>Todas aportan una cantidad similar de calorías y proteína, así que puedes cambiar sin perder el objetivo del plan.'));
+  alternativas(cm.id).forEach(r=>{
+    const rep=(REPARTO[plan.nComidas]||REPARTO[4])[cm.s];
+    const f=Math.max(0.6,Math.min(1.8,Math.round((plan.meta.kcal*rep/r.k)*4)/4));
+    const b=el('button','plan-op');
+    b.innerHTML='<b>'+r.n+'</b><div class="mini"><span><i>'+Math.round(r.k*f)+'</i> kcal</span>'+
+      '<span><i>'+Math.round(r.p*f)+'</i> g prot</span><span><i>'+Math.round(r.fi*f)+'</i> g fibra</span></div>';
+    b.onclick=()=>{cm.id=r.id;cm.f=f;if(guardado)grabar(KDT.plan,plan);verPlan(plan,guardado)};
+    c.appendChild(b);
+  });
+  abrir('#capaInfo');
+}
+/* -------- lista de compras -------- */
+function verLista(plan){
+  $('#infoTitulo').textContent='Lista de compras';
+  const c=$('#infoCuerpo');c.innerHTML='';
+  c.appendChild(el('div','dr','<h4>🛒 Para '+plan.dias+' día'+(plan.dias>1?'s':'')+'</h4>Cantidades aproximadas, sumadas de todas las comidas del plan. Ajusta según lo que ya tengas en casa.'));
+  const l=listaCompras(plan);
+  Object.keys(CATS).forEach(cat=>{
+    if(!l[cat])return;
+    const cj=el('div','lista-cat','<h4>'+CATS[cat][0]+'  '+CATS[cat][1]+'</h4>');
+    l[cat].forEach(it=>{
+      const f=el('div','lista-item','<span class="ck"></span><b>'+it.nom+'</b><small>'+it.cant+'</small>');
+      f.onclick=()=>f.classList.toggle('on');
+      cj.appendChild(f);
+    });
+    c.appendChild(cj);
+  });
+  const cp=el('button','btn fantasma','Copiar la lista');
+  cp.onclick=()=>{
+    let txt='LISTA DE COMPRAS — '+plan.dias+' días\n';
+    Object.keys(CATS).forEach(cat=>{
+      if(!l[cat])return;
+      txt+='\n'+CATS[cat][1].toUpperCase()+'\n';
+      l[cat].forEach(it=>txt+='- '+it.nom+': '+it.cant+'\n');
+    });
+    navigator.clipboard&&navigator.clipboard.writeText(txt);avisar('Lista copiada');
+  };
+  c.appendChild(cp);
+  const v=el('button','btn','Volver al plan');
+  v.onclick=()=>verPlan(plan,planDieta&&planDieta.creado===plan.creado);
+  c.appendChild(v);
+  abrir('#capaInfo');
+}
+
+</script>
+<script>
+/* =========================================================
+   MÓDULO 16D — integración con el registro diario
+   ========================================================= */
+/* si hay plan activo, sus metas mandan sobre el cálculo base */
+const planPrev16=calcularPlan;
+calcularPlan=function(pf){
+  const base=planPrev16(pf);
+  if(planDieta&&planDieta.meta){
+    const m=planDieta.meta;
+    return Object.assign({},base,{kcal:m.kcal,prot:m.prot,carb:m.carb,gras:m.gras,dePlan:true});
+  }
+  return base;
+};
+
+const dietaPrev16=pintarDieta;
+pintarDieta=function(){
+  dietaPrev16();
+  const v=$('#v-dieta');
+
+  /* tarjeta de acceso a Crea tu dieta */
+  const b=el('button','guia-btn');
+  b.style.background='linear-gradient(135deg,#00C2A8,#7B5CFF)';
+  b.style.boxShadow='0 10px 26px -10px rgba(0,194,168,.8)';
+  const o=planDieta?OBJ.find(x=>x.id===planDieta.obj):null;
+  b.innerHTML='<span class="em">🥗</span><span class="crece"><b>'+(o?o.n:'Crea tu dieta')+'</b>'+
+    '<small>'+(o?'Plan de '+planDieta.dias+' día'+(planDieta.dias>1?'s':'')+' · toca para verlo':'Elige tu objetivo y armamos tu plan')+'</small></span><span>›</span>';
+  b.onclick=()=>planDieta?(diaVer=0,verPlan(planDieta,true)):abrirCrearDieta();
+  const ref=v.querySelector('.anillo')||v.querySelector('.rut-tarjeta');
+  if(ref)v.insertBefore(b,ref);else v.appendChild(b);
+
+  /* comparación con el plan + sugerencias */
+  if(!perfil&&!planDieta)return;
+  const plan=calcularPlan(perfil||{sexo:'h',edad:30,peso:70,altura:170,actividad:'lig',meta:'mantener'});
+  const t=totalDia(hoyClave());
+  const restK=Math.round(plan.kcal-t.kcal),restP=Math.round(plan.prot-t.p);
+  const caja=el('div','dr');
+  caja.innerHTML='<h4>🎯 Frente a tu objetivo</h4>'+
+    '<div style="font-size:14.5px;line-height:1.8">'+
+    'Objetivo: <b>'+plan.kcal+' kcal</b> · '+plan.prot+' g proteína<br>'+
+    'Consumido: <b>'+Math.round(t.kcal)+' kcal</b> · '+Math.round(t.p)+' g proteína<br>'+
+    'Restante: <b>'+Math.max(0,restK)+' kcal</b> · '+Math.max(0,restP)+' g proteína</div>';
+  if(restK>150&&restP>15){
+    const sug=sugerirComidas(restK,restP);
+    if(sug.length){
+      caja.innerHTML+='<p style="margin-top:12px;font-size:14.3px;line-height:1.5">Te quedan alrededor de <b>'+restK+' kcal</b> y todavía te falta proteína. Estas opciones encajan bien:</p>';
+      const l=el('div');l.style.marginTop='10px';
+      sug.forEach(r=>{
+        const f=el('div','comida');
+        f.innerHTML='<div class="crece"><b>'+r.n+'</b><small>'+r.p+' g de proteína · '+r.fi+' g de fibra</small></div><div class="kcal">'+r.k+'</div>';
+        l.appendChild(f);
+      });
+      caja.appendChild(l);
+    }
+  }else if(restK<0){
+    caja.innerHTML+='<p style="margin-top:10px;font-size:14.3px;line-height:1.5;color:var(--tenue)">Vas por encima de tu objetivo de hoy. Pasa, y un día no cambia el resultado: lo que cuenta es la tendencia de la semana.</p>';
+  }
+  v.appendChild(caja);
+};
+pintarDieta();
+
+</script>
+<script>
+/* =========================================================
+   MÓDULO 17 — 50 recetas más para el generador
+   Mismo formato: se suman al arreglo REC sin tocar nada más.
+   ========================================================= */
+const REC_MAS=[
+/* ---------- desayuno (12) ---------- */
+{id:'d11',n:'Tortilla de huevo con avena y espinaca',s:'desayuno',k:390,p:26,c:34,g:16,sat:4,fi:6,so:420,t:['altaprot','fibra'],
+ ing:['Huevos|3 unidades|proteinas','Avena|30 g|cereales','Espinaca|1 taza|vegetales']},
+{id:'d12',n:'Bowl de yogur griego con kiwi y chía',s:'desayuno',k:340,p:24,c:38,g:9,sat:2,fi:9,so:95,t:['altaprot','fibra','bajacal','corazon'],
+ ing:['Yogur griego|200 g|lacteos','Kiwi|2 unidades|frutas','Semillas de chía|2 cdas|grasas']},
+{id:'d13',n:'Sándwich de pavo con queso fresco',s:'desayuno',k:400,p:30,c:38,g:12,sat:4,fi:5,so:820,t:['altaprot','rapido','facil'],
+ ing:['Pan integral|2 rebanadas|cereales','Jamón de pavo|4 lonjas|proteinas','Queso blanco fresco|30 g|lacteos','Tomate|1 unidad|vegetales']},
+{id:'d14',n:'Arepa rellena de huevo y aguacate',s:'desayuno',k:450,p:16,c:48,g:22,sat:5,fi:8,so:400,t:['facil','economico'],
+ ing:['Tortilla de maíz|2 unidades|cereales','Huevos|2 unidades|proteinas','Aguacate|½ unidad|grasas']},
+{id:'d15',n:'Batido verde con proteína',s:'desayuno',k:330,p:30,c:32,g:8,sat:1.5,fi:7,so:200,t:['altaprot','rapido','bajacal','fibra'],
+ ing:['Proteína en polvo|1 scoop|proteinas','Espinaca|2 tazas|vegetales','Guineo|1 unidad|frutas','Leche de almendra|250 ml|lacteos']},
+{id:'d16',n:'Requesón con melocotón y nueces',s:'desayuno',k:360,p:24,c:28,g:17,sat:4,fi:4,so:480,t:['altaprot','bajacarb'],
+ ing:['Requesón|1 taza|lacteos','Durazno|1 unidad|frutas','Nueces|20 g|grasas']},
+{id:'d17',n:'Huevos con frijoles y tortilla',s:'desayuno',k:470,p:26,c:48,g:18,sat:5,fi:13,so:620,t:['economico','fibra'],
+ ing:['Huevos|2 unidades|proteinas','Frijoles negros|½ taza|legumbres','Tortilla de maíz|2 unidades|cereales']},
+{id:'d18',n:'Avena nocturna con fresas',s:'desayuno',k:350,p:16,c:52,g:8,sat:2,fi:9,so:110,t:['facil','fibra','vegetariano'],
+ ing:['Avena|50 g|cereales','Yogur natural|½ taza|lacteos','Fresas|1 taza|frutas','Semillas de chía|1 cda|grasas']},
+{id:'d19',n:'Claras con champiñones y tostada',s:'desayuno',k:290,p:26,c:28,g:7,sat:1.5,fi:5,so:480,t:['bajacal','altaprot'],
+ ing:['Claras de huevo|5 unidades|proteinas','Pan integral|1 rebanada|cereales','Cebolla|½ taza|vegetales']},
+{id:'d20',n:'Pan integral con atún y tomate',s:'desayuno',k:340,p:28,c:32,g:10,sat:1.8,fi:6,so:700,t:['altaprot','economico','rapido'],
+ ing:['Pan integral|2 rebanadas|cereales','Atún en agua|1 lata|proteinas','Tomate|1 unidad|vegetales']},
+{id:'d21',n:'Batata asada con huevo',s:'desayuno',k:380,p:16,c:48,g:13,sat:3.5,fi:8,so:280,t:['economico','fibra'],
+ ing:['Batata|1 taza|cereales','Huevos|2 unidades|proteinas','Aceite de oliva|1 cdita|grasas']},
+{id:'d22',n:'Cereal integral con leche y almendras',s:'desayuno',k:360,p:16,c:48,g:12,sat:2,fi:8,so:280,t:['facil','rapido','fibra'],
+ ing:['Cereal integral|1 taza|cereales','Leche|250 ml|lacteos','Almendras|20 g|grasas']},
+/* ---------- media mañana (8) ---------- */
+{id:'m7',n:'Requesón con tomate cherry',s:'media',k:150,p:14,c:10,g:5,sat:3,fi:2,so:470,t:['altaprot','bajacal','bajacarb'],
+ ing:['Requesón|½ taza|lacteos','Tomate|1 unidad|vegetales']},
+{id:'m8',n:'Tostada integral con aguacate',s:'media',k:230,p:6,c:22,g:14,sat:2.2,fi:8,so:300,t:['corazon','fibra','vegetariano'],
+ ing:['Pan integral|1 rebanada|cereales','Aguacate|½ unidad|grasas']},
+{id:'m9',n:'Uvas con queso fresco',s:'media',k:200,p:10,c:28,g:6,sat:3.5,fi:2,so:310,t:['facil','rapido'],
+ ing:['Uvas|1 taza|frutas','Queso blanco fresco|40 g|lacteos']},
+{id:'m10',n:'Pepino y zanahoria con hummus',s:'media',k:170,p:6,c:19,g:9,sat:1.3,fi:7,so:270,t:['bajacal','fibra','vegetariano'],
+ ing:['Pepino|1 taza|vegetales','Zanahoria|1 unidad|vegetales','Hummus|3 cdas|grasas']},
+{id:'m11',n:'Yogur griego con semillas de linaza',s:'media',k:210,p:20,c:14,g:8,sat:1.5,fi:4,so:85,t:['altaprot','corazon','bajacarb'],
+ ing:['Yogur griego|200 g|lacteos','Semillas de linaza|2 cdas|grasas']},
+{id:'m12',n:'Sandía con pistachos',s:'media',k:210,p:7,c:20,g:13,sat:1.6,fi:4,so:5,t:['bajacal','rapido'],
+ ing:['Sandía|2 tazas|frutas','Pistachos|30 g|grasas']},
+{id:'m13',n:'Huevos hervidos con pepino',s:'media',k:160,p:13,c:6,g:10,sat:3.2,fi:1,so:150,t:['altaprot','bajacarb','economico'],
+ ing:['Huevos|2 unidades|proteinas','Pepino|1 taza|vegetales']},
+{id:'m14',n:'Batido de lechosa y avena',s:'media',k:240,p:7,c:44,g:4,sat:1,fi:6,so:70,t:['economico','fibra','vegetariano'],
+ ing:['Lechosa|1 taza|frutas','Avena|30 g|cereales','Leche|200 ml|lacteos']},
+/* ---------- almuerzo (15) ---------- */
+{id:'a11',n:'Bowl de quinoa con pollo y aguacate',s:'almuerzo',k:640,p:44,c:52,g:26,sat:5,fi:11,so:480,t:['altaprot','corazon','fibra'],
+ ing:['Quinoa|1 taza|cereales','Pechuga de pollo|140 g|proteinas','Aguacate|½ unidad|grasas','Espinaca|1 taza|vegetales']},
+{id:'a12',n:'Pollo al curry con arroz basmati',s:'almuerzo',k:660,p:42,c:70,g:18,sat:6,fi:6,so:620,t:['equilibrado'],
+ ing:['Pechuga de pollo|150 g|proteinas','Arroz blanco|1 taza|cereales','Cebolla|½ taza|vegetales','Leche|100 ml|lacteos']},
+{id:'a13',n:'Salteado de res con vegetales y arroz',s:'almuerzo',k:660,p:40,c:66,g:22,sat:6.5,fi:7,so:820,t:['musculo'],
+ ing:['Carne de res|130 g|proteinas','Arroz blanco|1 taza|cereales','Brócoli|1 taza|vegetales','Pimiento|1 unidad|vegetales']},
+{id:'a14',n:'Sopa de lentejas con vegetales',s:'almuerzo',k:420,p:22,c:62,g:6,sat:0.9,fi:16,so:640,t:['economico','vegetariano','fibra','bajacal'],
+ ing:['Lentejas|1 taza|legumbres','Zanahoria|1 unidad|vegetales','Apio|1 taza|vegetales','Cebolla|½ taza|vegetales']},
+{id:'a15',n:'Wrap integral de pollo y vegetales',s:'almuerzo',k:520,p:40,c:48,g:18,sat:4.5,fi:8,so:760,t:['facil','rapido','altaprot'],
+ ing:['Pan pita integral|1 unidad|cereales','Pechuga de pollo|130 g|proteinas','Lechuga|1 taza|vegetales','Tomate|1 unidad|vegetales']},
+{id:'a16',n:'Pescado a la plancha con puré de papa',s:'almuerzo',k:520,p:38,c:44,g:18,sat:4,fi:5,so:520,t:['equilibrado','corazon'],
+ ing:['Pescado blanco|150 g|proteinas','Papa|1 taza|cereales','Leche|100 ml|lacteos','Aceite de oliva|1 cda|grasas']},
+{id:'a17',n:'Chili de frijoles con carne molida',s:'almuerzo',k:600,p:38,c:52,g:22,sat:7,fi:14,so:820,t:['fibra','musculo'],
+ ing:['Carne molida de res|120 g|proteinas','Frijoles negros|1 taza|legumbres','Tomate|1 unidad|vegetales','Pimiento|1 unidad|vegetales']},
+{id:'a18',n:'Ensalada mediterránea con garbanzos',s:'almuerzo',k:480,p:18,c:52,g:22,sat:3.5,fi:13,so:560,t:['vegetariano','corazon','fibra'],
+ ing:['Garbanzos|1 taza|legumbres','Pepino|1 taza|vegetales','Tomate|1 unidad|vegetales','Aceite de oliva|1 cda|grasas','Queso blanco fresco|40 g|lacteos']},
+{id:'a19',n:'Pechuga rellena de espinaca y queso',s:'almuerzo',k:520,p:52,c:12,g:28,sat:9,fi:3,so:640,t:['altaprot','bajacarb'],
+ ing:['Pechuga de pollo|180 g|proteinas','Espinaca|2 tazas|vegetales','Queso mozzarella|40 g|lacteos']},
+{id:'a20',n:'Arroz integral con salmón y brócoli',s:'almuerzo',k:640,p:40,c:56,g:24,sat:4.5,fi:8,so:460,t:['corazon','equilibrado'],
+ ing:['Arroz integral|1 taza|cereales','Salmón|140 g|proteinas','Brócoli|1 taza|vegetales']},
+{id:'a21',n:'Guiso de garbanzos con pollo',s:'almuerzo',k:580,p:40,c:56,g:16,sat:3.5,fi:13,so:700,t:['fibra','economico'],
+ ing:['Garbanzos|1 taza|legumbres','Pechuga de pollo|120 g|proteinas','Zanahoria|1 unidad|vegetales']},
+{id:'a22',n:'Berenjena rellena de carne y vegetales',s:'almuerzo',k:480,p:34,c:28,g:26,sat:8,fi:9,so:640,t:['bajacarb','fibra'],
+ ing:['Berenjena|2 tazas|vegetales','Carne molida de res|120 g|proteinas','Queso mozzarella|30 g|lacteos']},
+{id:'a23',n:'Fajitas de pollo con pimientos',s:'almuerzo',k:560,p:42,c:48,g:20,sat:5,fi:8,so:720,t:['facil','altaprot'],
+ ing:['Pechuga de pollo|140 g|proteinas','Tortilla de maíz|3 unidades|cereales','Pimiento|2 unidades|vegetales','Cebolla|½ taza|vegetales']},
+{id:'a24',n:'Ensalada de pasta integral con atún',s:'almuerzo',k:540,p:34,c:62,g:16,sat:2.5,fi:9,so:640,t:['facil','economico'],
+ ing:['Pasta integral|100 g|cereales','Atún en agua|2 latas|proteinas','Tomate|1 unidad|vegetales','Aceite de oliva|1 cda|grasas']},
+{id:'a25',n:'Pollo al horno con auyama y ensalada',s:'almuerzo',k:500,p:44,c:34,g:20,sat:4.5,fi:8,so:520,t:['bajacal','altaprot','fibra'],
+ ing:['Pechuga de pollo|150 g|proteinas','Auyama|1 taza|vegetales','Lechuga|2 tazas|vegetales']},
+/* ---------- merienda (7) ---------- */
+{id:'s7',n:'Batido de proteína con guineo',s:'merienda',k:300,p:30,c:34,g:5,sat:2,fi:4,so:190,t:['altaprot','rapido','musculo'],
+ ing:['Proteína en polvo|1 scoop|proteinas','Guineo|1 unidad|frutas','Leche|250 ml|lacteos']},
+{id:'s8',n:'Manzana con mantequilla de maní',s:'merienda',k:285,p:9,c:32,g:16,sat:3,fi:7,so:145,t:['economico','fibra'],
+ ing:['Manzana|1 unidad|frutas','Mantequilla de maní|2 cdas|grasas']},
+{id:'s9',n:'Palomitas caseras y té verde',s:'merienda',k:130,p:4,c:24,g:2,sat:0.4,fi:5,so:120,t:['bajacal','economico','fibra'],
+ ing:['Maíz|1 taza|cereales','Té verde|1 taza|grasas']},
+{id:'s10',n:'Rollitos de pavo con queso',s:'merienda',k:190,p:22,c:4,g:9,sat:4,fi:0,so:840,t:['altaprot','bajacarb','rapido'],
+ ing:['Jamón de pavo|4 lonjas|proteinas','Queso mozzarella|30 g|lacteos']},
+{id:'s11',n:'Ensalada de frutas con yogur',s:'merienda',k:230,p:12,c:40,g:3,sat:1.5,fi:5,so:90,t:['bajacal','facil','vegetariano'],
+ ing:['Piña|1 taza|frutas','Fresas|1 taza|frutas','Yogur natural|½ taza|lacteos']},
+{id:'s12',n:'Huevo hervido con tostada',s:'merienda',k:200,p:12,c:16,g:9,sat:2.5,fi:3,so:290,t:['economico','altaprot'],
+ ing:['Huevos|1 unidad|proteinas','Pan integral|1 rebanada|cereales']},
+{id:'s13',n:'Almendras y mandarina',s:'merienda',k:215,p:7,c:18,g:15,sat:1.2,fi:5,so:2,t:['corazon','rapido','bajacarb'],
+ ing:['Almendras|30 g|grasas','Mandarina|1 unidad|frutas']},
+/* ---------- cena (8) ---------- */
+{id:'c9',n:'Salmón al horno con espárragos',s:'cena',k:460,p:38,c:12,g:28,sat:5.5,fi:6,so:380,t:['corazon','bajacarb','altaprot'],
+ ing:['Salmón|150 g|proteinas','Brócoli|1 taza|vegetales','Aceite de oliva|1 cda|grasas']},
+{id:'c10',n:'Sopa de vegetales con pollo',s:'cena',k:320,p:28,c:28,g:9,sat:2,fi:7,so:820,t:['bajacal','facil','fibra'],
+ ing:['Pechuga de pollo|110 g|proteinas','Zanahoria|1 unidad|vegetales','Calabacín|1 taza|vegetales','Apio|1 taza|vegetales']},
+{id:'c11',n:'Berenjena a la plancha con queso fresco',s:'cena',k:300,p:18,c:20,g:17,sat:6,fi:8,so:520,t:['vegetariano','bajacal','fibra'],
+ ing:['Berenjena|2 tazas|vegetales','Queso blanco fresco|60 g|lacteos','Aceite de oliva|1 cda|grasas']},
+{id:'c12',n:'Atún con ensalada y aguacate',s:'cena',k:400,p:34,c:14,g:24,sat:3.5,fi:9,so:520,t:['altaprot','bajacarb','rapido','corazon'],
+ ing:['Atún en agua|2 latas|proteinas','Lechuga|2 tazas|vegetales','Aguacate|½ unidad|grasas']},
+{id:'c13',n:'Pavo con puré de coliflor',s:'cena',k:380,p:40,c:14,g:18,sat:5,fi:5,so:480,t:['altaprot','bajacarb','bajacal'],
+ ing:['Pavo|150 g|proteinas','Coliflor|2 tazas|vegetales','Leche|100 ml|lacteos']},
+{id:'c14',n:'Wrap de vegetales con hummus',s:'cena',k:390,p:14,c:48,g:16,sat:2.5,fi:11,so:620,t:['vegetariano','fibra'],
+ ing:['Pan pita integral|1 unidad|cereales','Hummus|3 cdas|grasas','Lechuga|1 taza|vegetales','Pimiento|1 unidad|vegetales']},
+{id:'c15',n:'Camarones salteados con calabacín',s:'cena',k:340,p:34,c:16,g:16,sat:2.5,fi:5,so:600,t:['altaprot','bajacal','bajacarb'],
+ ing:['Camarones|150 g|proteinas','Calabacín|2 tazas|vegetales','Aceite de oliva|1 cda|grasas']},
+{id:'c16',n:'Chuleta de cerdo con ensalada de repollo',s:'cena',k:420,p:34,c:16,g:24,sat:7,fi:5,so:520,t:['bajacarb','economico'],
+ ing:['Lomo de cerdo|140 g|proteinas','Repollo|2 tazas|vegetales','Zanahoria|1 unidad|vegetales']}
+];
+if(typeof REC!=='undefined'){
+  const ya=new Set(REC.map(r=>r.id));
+  REC_MAS.forEach(r=>{if(!ya.has(r.id))REC.push(r)});
+}
+
+</script>
 </body>
 </html>
