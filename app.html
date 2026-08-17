@@ -5151,5 +5151,122 @@ cambiarComida=function(plan,d,i,guardado){
 };
 
 </script>
+<script>
+/* =========================================================
+   MÓDULO 19 — el perfil dentro del flujo de la dieta
+   El sexo, la edad, el peso, la altura y la actividad ya se
+   usaban en el cálculo, pero se pedían en otro sitio.
+   Aquí se piden dentro del propio flujo y se muestran.
+   ========================================================= */
+const est19=document.createElement('style');
+est19.textContent=`
+.perfil-res{display:flex;align-items:center;gap:12px;background:var(--blanco);border-radius:18px;padding:14px 16px;box-shadow:var(--sombra);margin-bottom:12px}
+.perfil-res .ic{font-size:22px;flex:0 0 auto}
+.perfil-res b{display:block;font-size:14.5px;font-weight:600;line-height:1.3}
+.perfil-res small{color:var(--tenue);font-size:12.5px}
+.perfil-res button{flex:0 0 auto;font-size:13px;font-weight:700;color:var(--espalda);background:#EDE9FF;padding:8px 14px;border-radius:100px}
+.sexo-op{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.sexo-op button{padding:18px 12px;border-radius:18px;background:var(--blanco);box-shadow:var(--sombra);font-size:15.5px;font-weight:600}
+.sexo-op button.on{background:linear-gradient(135deg,#7B5CFF,#FF4D6D);color:#fff}
+.sexo-op .e{display:block;font-size:24px;margin-bottom:4px}
+`;
+document.head.appendChild(est19);
+
+const ACT_TXT={sed:'poco activo',lig:'actividad ligera',mod:'actividad moderada',alt:'muy activo'};
+function resumenPerfil(){
+  if(!perfil)return null;
+  return (perfil.sexo==='h'?'Hombre':'Mujer')+' · '+perfil.edad+' años · '+
+    perfil.peso+' kg · '+perfil.altura+' cm · '+ACT_TXT[perfil.actividad];
+}
+
+/* -------- formulario dentro del flujo -------- */
+function pasoPerfilDieta(objId,nCom,dias){
+  $('#infoTitulo').textContent='Tus datos';
+  const c=$('#infoCuerpo');c.innerHTML='';
+  c.appendChild(el('div','dr','<h4>📋 ¿Por qué los necesitamos?</h4>'+
+    'Las calorías que gasta tu cuerpo dependen del sexo, la edad, el peso, la altura y cuánto te mueves. '+
+    'Sin estos datos usamos un promedio de 2.000 kcal, que puede quedarte grande o pequeño.'));
+  const p=perfil||{sexo:'h',edad:30,peso:75,altura:175,actividad:'lig'};
+  let sexo=p.sexo;
+  c.appendChild(el('div','etq','Sexo'));
+  const sx=el('div','sexo-op');
+  [['h','👨','Hombre'],['m','👩','Mujer']].forEach(([v,e,t])=>{
+    const b=el('button',(v===sexo?'on':''),'<span class="e">'+e+'</span>'+t);
+    b.onclick=()=>{sexo=v;[...sx.children].forEach(x=>x.classList.remove('on'));b.classList.add('on')};
+    sx.appendChild(b);
+  });
+  c.appendChild(sx);
+  const campo=(l,h)=>{const d=el('div','campo','<label class="etq">'+l+'</label>');d.insertAdjacentHTML('beforeend',h);return d};
+  c.appendChild(campo('Edad','<input id="pd-edad" type="number" inputmode="numeric" value="'+p.edad+'">'));
+  c.appendChild(campo('Peso (kg)','<input id="pd-peso" type="number" inputmode="decimal" value="'+p.peso+'">'));
+  c.appendChild(campo('Altura (cm)','<input id="pd-alt" type="number" inputmode="numeric" value="'+p.altura+'">'));
+  c.appendChild(campo('¿Cuánto te mueves?','<select id="pd-act">'+
+    '<option value="sed">Poco activo — trabajo sentado</option>'+
+    '<option value="lig">Ligero — camino algo, entreno 1-3 días</option>'+
+    '<option value="mod">Moderado — entreno 3-5 días</option>'+
+    '<option value="alt">Muy activo — trabajo físico o entreno casi diario</option></select>'));
+  $('#pd-act').value=p.actividad;
+  const b=el('button','btn','Calcular mi plan');
+  b.onclick=()=>{
+    const n=x=>parseFloat($(x).value);
+    if(!(n('#pd-edad')>=14&&n('#pd-edad')<=95)){avisar('Revisa la edad');return}
+    if(!(n('#pd-peso')>=30&&n('#pd-peso')<=300)){avisar('Revisa el peso');return}
+    if(!(n('#pd-alt')>=120&&n('#pd-alt')<=230)){avisar('Revisa la altura');return}
+    perfil={sexo:sexo,edad:n('#pd-edad'),peso:n('#pd-peso'),altura:n('#pd-alt'),
+      actividad:$('#pd-act').value,meta:(perfil&&perfil.meta)||'mantener'};
+    grabar(KD.p,perfil);
+    pasoEstilos(objId,nCom,dias);
+  };
+  c.appendChild(b);
+  const s=el('button','omitir','Usar valores promedio');
+  s.onclick=()=>pasoEstilos(objId,nCom,dias);
+  c.appendChild(s);
+  c.appendChild(el('div','aviso-salud','Si tienes menos de 18 años, estás embarazada o tienes alguna condición de salud, usa estos números solo como referencia general y consulta con un profesional.'));
+  abrir('#capaInfo');
+}
+
+/* -------- se intercala después de elegir la duración -------- */
+pasoDuracion=function(objId,nCom){
+  $('#infoTitulo').textContent='¿Para cuántos días?';
+  const c=$('#infoCuerpo');c.innerHTML='';
+  [[1,'1 día','Para probar cómo funciona'],[3,'3 días','Un plan corto'],
+   [7,'7 días','Una semana completa'],[14,'14 días','Dos semanas, con más variedad']].forEach(([n,t,d])=>{
+    const b=el('button','plan-op','<b>'+t+'</b><small>'+d+'</small>');
+    b.onclick=()=>perfil?pasoEstilos(objId,nCom,n):pasoPerfilDieta(objId,nCom,n);
+    c.appendChild(b);
+  });
+  abrir('#capaInfo');
+};
+
+/* -------- mostrar para quién está calculado -------- */
+const estilosPrev19=pasoEstilos;
+pasoEstilos=function(objId,nCom,dias){
+  estilosPrev19(objId,nCom,dias);
+  const c=$('#infoCuerpo');
+  const r=el('div','perfil-res');
+  const txt=resumenPerfil();
+  r.innerHTML='<span class="ic">'+(perfil?(perfil.sexo==='h'?'👨':'👩'):'👤')+'</span>'+
+    '<span class="crece"><b>'+(txt?'Calculado para ti':'Valores promedio')+'</b>'+
+    '<small>'+(txt||'Sin tus datos usamos 2.000 kcal de referencia')+'</small></span>';
+  const b=el('button',null,txt?'Cambiar':'Personalizar');
+  b.onclick=()=>pasoPerfilDieta(objId,nCom,dias);
+  r.appendChild(b);
+  c.insertBefore(r,c.firstChild);
+};
+
+/* -------- y también dentro del plan ya creado -------- */
+const verPlanPrev19=verPlan;
+verPlan=function(plan,guardado){
+  verPlanPrev19(plan,guardado);
+  const c=$('#infoCuerpo');
+  const res=c.querySelector('.resumen');if(!res)return;
+  const txt=resumenPerfil();
+  const n=document.createElement('p');
+  n.style.cssText='font-size:12.5px;opacity:.9;margin-top:6px';
+  n.textContent=txt?'Calculado para: '+txt:'Calculado con valores promedio. Personaliza tus datos para afinarlo.';
+  res.appendChild(n);
+};
+
+</script>
 </body>
 </html>
