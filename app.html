@@ -5429,5 +5429,172 @@ aj20.onclick=function(){
 })();
 
 </script>
+<script>
+/* =========================================================
+   MÓDULO 21 — cantidades reales en "¿Qué comiste?"
+   Antes solo leía el número y lo multiplicaba por la porción
+   estándar. Ahora entiende la unidad y convierte de verdad.
+   ========================================================= */
+const UNI={
+ ml:['v',1],mililitro:['v',1],mililitros:['v',1],cc:['v',1],
+ l:['v',1000],litro:['v',1000],litros:['v',1000],
+ g:['p',1],gr:['p',1],gramo:['p',1],gramos:['p',1],
+ kg:['p',1000],kilo:['p',1000],kilos:['p',1000],
+ oz:['p',28.35],onza:['p',28.35],onzas:['p',28.35],
+ lb:['p',453.6],libra:['p',453.6],libras:['p',453.6],
+ taza:['v',240],tazas:['v',240],
+ vaso:['v',250],vasos:['v',250],
+ lata:['v',355],latas:['v',355],
+ botella:['v',350],botellas:['v',350],
+ copa:['v',150],copas:['v',150],
+ cucharada:['v',15],cucharadas:['v',15],cda:['v',15],cdas:['v',15],
+ cucharadita:['v',5],cucharaditas:['v',5],cdita:['v',5],cditas:['v',5],
+ unidad:['u',1],unidades:['u',1],u:['u',1],
+ rebanada:['u',1],rebanadas:['u',1],lonja:['u',1],lonjas:['u',1],
+ presa:['u',1],presas:['u',1],bola:['u',1],bolas:['u',1],
+ pieza:['u',1],piezas:['u',1],porcion:['u',1],porciones:['u',1],
+ plato:['u',1],platos:['u',1],scoop:['u',1],scoops:['u',1],
+ rueda:['u',1],ruedas:['u',1],pedazo:['u',1],pedazos:['u',1]
+};
+const DENS=0.85; /* g por ml, aproximación para convertir entre peso y volumen */
+const FRACT={'medio':0.5,'media':0.5,'½':0.5,'¼':0.25,'¾':0.75,'cuarto':0.25};
+
+const PALNUM={un:1,una:1,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,
+ nueve:9,diez:10,once:11,doce:12,quince:15,veinte:20,treinta:30,cien:100,ciento:100,
+ cincuenta:50,doscientos:200,trescientos:300,cuarto:0.25};
+function leerCantidad(frag){
+  let t=sinTilde(frag).toLowerCase();
+  /* números escritos en palabras -> dígitos */
+  t=t.replace(/\b(un|una|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|quince|veinte|treinta|cincuenta|cien|ciento|doscientos|trescientos)\b/g,
+    p=>String(PALNUM[p]));
+  const re=/(\d+(?:[.,]\d+)?|medio|media|½|¼|¾)\s*([a-z]+)?/g;
+  let m;
+  while((m=re.exec(t))!==null){
+    const crudo=m[1];
+    const num=FRACT[crudo]!=null?FRACT[crudo]:parseFloat(crudo.replace(',','.'));
+    if(!(num>0))continue;
+    const pal=(m[2]||'').replace(/\.$/,'');
+    if(UNI[pal])return {n:num,tipo:UNI[pal][0],base:num*UNI[pal][1],uni:pal};
+    /* número suelto: son porciones */
+    if(num<=30)return {n:num,tipo:null,base:null,uni:null};
+  }
+  return {n:1,tipo:null,base:null,uni:null};
+}
+function leerPorcionRef(txt){
+  const t=sinTilde(String(txt||'')).toLowerCase();
+  const m=t.match(/(\d+(?:[.,]\d+)?|medio|media|½|¼|¾)?\s*([a-z]+)/);
+  if(!m)return {tipo:'u',base:1};
+  const crudo=m[1];
+  const num=crudo==null?1:(FRACT[crudo]!=null?FRACT[crudo]:parseFloat(String(crudo).replace(',','.'))||1);
+  const pal=m[2];
+  if(UNI[pal])return {tipo:UNI[pal][0],base:num*UNI[pal][1]};
+  return {tipo:'u',base:num};
+}
+/* devuelve cuántas porciones estándar equivalen a lo que dijo el usuario */
+function factorReal(usuario,refTxt){
+  const ref=leerPorcionRef(refTxt);
+  if(usuario.tipo===null)return {f:usuario.n,exacto:true,txt:null};
+  let base=usuario.base,tipo=usuario.tipo,nota=null;
+  if(tipo!==ref.tipo){
+    if(tipo==='v'&&ref.tipo==='p'){base=base*DENS;nota='conversión aproximada'}
+    else if(tipo==='p'&&ref.tipo==='v'){base=base/DENS;nota='conversión aproximada'}
+    else return {f:usuario.n,exacto:false,
+      txt:'No pudimos convertir '+usuario.n+' '+usuario.uni+' a '+refTxt+', así que lo contamos como porciones.'};
+  }
+  const f=base/ref.base;
+  if(!(f>0)||f>60)return {f:usuario.n,exacto:false,txt:null};
+  return {f:+f.toFixed(3),exacto:true,nota:nota,
+    txt:usuario.n+' '+usuario.uni+' de una porción de '+refTxt};
+}
+
+/* ---------- analizador con unidades ---------- */
+analizarTexto=function(txt){
+  const partes=sinTilde(txt).split(/\s+(?:con|y|mas|ademas)\s+|[,+]/).map(s=>s.trim()).filter(Boolean);
+  const encontrados=[],perdidos=[];
+  partes.forEach(p=>{
+    const a=buscaAlimento(p);
+    if(!a){if(p.length>2)perdidos.push(p);return}
+    const q=leerCantidad(p);
+    const r=factorReal(q,a[1]);
+    encontrados.push({a:a,n:r.f,detalle:r.txt,aprox:r.nota,orig:p});
+  });
+  return {encontrados,perdidos};
+};
+
+/* ---------- textos del veredicto, revisados ---------- */
+veredictoComida=function(items){
+  const t={k:0,p:0,c:0,g:0,sat:0,az:0,so:0,fi:0};
+  items.forEach(({a,n})=>{t.k+=a[2]*n;t.p+=a[3]*n;t.c+=a[4]*n;t.g+=a[5]*n;
+    t.sat+=(a[6]||0)*n;t.az+=(a[7]||0)*n;t.so+=(a[8]||0)*n;t.fi+=(a[9]||0)*n});
+  const R=refDiarias();
+  const plan=perfil?calcularPlan(perfil):null;
+  const v=[];let puntos=0;
+  if(t.sat>R.sat*0.5)v.push(['📌','Aporta '+Math.round(t.sat)+' g de grasa saturada, cerca de la mitad de la referencia del día. Conviene que el resto del día sea más liviano.']);
+  else{v.push(['✅','Grasa saturada bajo control: '+Math.round(t.sat)+' g.']);puntos++}
+  if(t.so>900)v.push(['📌','Bastante sodio: '+Math.round(t.so)+' mg de los 2.300 mg de referencia diaria. Moderarlo ayuda a cuidar la presión.']);
+  else{v.push(['✅','Sodio razonable: '+Math.round(t.so)+' mg.']);puntos++}
+  if(t.az>25)v.push(['📌','Trae '+Math.round(t.az)+' g de azúcar, unas '+Math.round(t.az/4)+' cucharaditas. Sacia poco para las calorías que suma.']);
+  else{v.push(['✅','Poca azúcar: '+Math.round(t.az)+' g.']);puntos++}
+  if(t.p<15)v.push(['🍗','Aporta poca proteína ('+Math.round(t.p)+' g). Agregarle pollo, huevo, atún o legumbres la hace más completa y saciante.']);
+  else{v.push(['✅','Buena proteína: '+Math.round(t.p)+' g.']);puntos++}
+  if(t.fi<5)v.push(['🥬','Poca fibra ('+Math.round(t.fi)+' g). Una ensalada, legumbres o una fruta la suben fácil.']);
+  else{v.push(['✅','Trae fibra: '+Math.round(t.fi)+' g.']);puntos++}
+  if(plan){
+    const pc=Math.round(t.k/plan.kcal*100);
+    v.unshift(['📊','Son '+Math.round(t.k)+' kcal, el '+pc+'% de tu meta del día ('+plan.kcal+' kcal).'+
+      (pc>45?' Es una comida grande; puedes compensarlo en el resto del día.':'')]);
+  }
+  const nivel=puntos>=4?3:puntos>=2?2:1;
+  return {t,v,nivel,titulo:nivel===3?'Buena comida':nivel===2?'Se puede mejorar':'Comida pesada'};
+};
+
+/* ---------- mostrar lo que realmente se entendió ---------- */
+const est21=document.createElement('style');
+est21.textContent=`
+.ent-fila{display:flex;align-items:center;gap:11px;background:var(--blanco);border-radius:16px;padding:13px 15px;margin-bottom:8px;box-shadow:0 3px 12px rgba(23,19,64,.05)}
+.ent-fila b{font-size:15px;font-weight:600;display:block;line-height:1.25}
+.ent-fila small{color:var(--tenue);font-size:12.5px;display:block}
+.ent-fila .kc{font-family:var(--disp);font-weight:800;font-size:17px;color:#1E56C2}
+.ent-aprox{font-size:11.5px;color:#8A6A22;background:#FFF6E6;padding:3px 8px;border-radius:100px;display:inline-block;margin-top:4px}
+`;
+document.head.appendChild(est21);
+
+const escribirPrev21=abrirEscribir;
+abrirEscribir=function(){
+  escribirPrev21();
+  const c=$('#infoCuerpo');
+  const v=c.querySelector('.vacio');
+  if(v)v.innerHTML='Escríbelo como lo dirías normal, con la cantidad si la sabes.<br>'+
+    'Ejemplos: <b>50 ml de refresco</b> · <b>150 g de pollo</b> · <b>2 tazas de arroz con habichuelas</b>';
+  const ta=c.querySelector('textarea');
+  if(ta)ta.placeholder='150 g de pollo con 1 taza de arroz y media taza de habichuelas';
+  const btn=[...c.querySelectorAll('.btn')].find(b=>b.textContent==='Analizar');
+  if(!btn)return;
+  const orig=btn.onclick;
+  btn.onclick=()=>{
+    orig();
+    /* reemplazar la lista de "lo que entendí" por una con las cantidades reales */
+    const {encontrados}=analizarTexto(ta.value);
+    if(!encontrados.length)return;
+    const etqs=[...c.querySelectorAll('.etq')].filter(e=>e.textContent==='Lo que entendí');
+    const etq=etqs[etqs.length-1];
+    if(!etq)return;
+    let n=etq.nextElementSibling;
+    while(n&&n.classList&&n.classList.contains('comida')){const x=n.nextElementSibling;n.remove();n=x}
+    const frag=document.createDocumentFragment();
+    encontrados.forEach(({a,n:f,detalle,aprox})=>{
+      const fila=el('div','ent-fila');
+      const cant=f===1?a[1]:(f<1?'':'')+bonito(+(f).toFixed(2))+' × '+a[1];
+      fila.innerHTML='<span class="semaforo" style="background:'+NIVCOL[a[10]]+'"></span>'+
+        '<div class="crece"><b>'+a[0]+'</b><small>'+(detalle||cant)+'</small>'+
+        (aprox?'<span class="ent-aprox">≈ '+aprox+'</span>':'')+'</div>'+
+        '<div class="kc">'+Math.round(a[2]*f)+'</div>';
+      frag.appendChild(fila);
+    });
+    etq.parentNode.insertBefore(frag,etq.nextSibling);
+  };
+};
+
+</script>
 </body>
 </html>
