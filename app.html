@@ -17,6 +17,20 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+
+/* --- evitar el zoom por doble toque (iOS) sin bloquear el zoom con dos dedos --- */
+html{-webkit-text-size-adjust:100%}
+html,body{touch-action:manipulation}
+button,a,input,select,textarea,label,
+.op,.chip,.tarjeta,.ej,.comida,.match,.plan-op,.obj-card,.dia-tab,.dia-card,
+.reto,.rut-tarjeta,.prog-card,.guia-btn,.crear-plan,.explora button,.herr button,
+.acc button,.check,.vaso,.paso button,.lista-item,.comida-acc button,.porcion .pm button,
+.serie input,.hist-fila,.item-rut,.logro,.macro,.placa,.card,.faq{
+  touch-action:manipulation;
+}
+/* el doble toque en los campos numéricos tampoco debe hacer zoom */
+input[type=number],input[type=text],select,textarea{font-size:16px}
+
 :root{color-scheme:light only}
 html{background:#F6F3FF}
 body{background:#F6F3FF!important;color:#171340!important;forced-color-adjust:none}
@@ -5266,6 +5280,153 @@ verPlan=function(plan,guardado){
   n.textContent=txt?'Calculado para: '+txt:'Calculado con valores promedio. Personaliza tus datos para afinarlo.';
   res.appendChild(n);
 };
+
+</script>
+<script>
+/* =========================================================
+   MÓDULO 20 — protección de los datos del usuario
+   1. La copia de seguridad guardaba solo 3 de 15 cosas.
+   2. Se pide almacenamiento persistente al navegador.
+   3. Aviso cuando hace mucho que no se hace copia.
+   ========================================================= */
+const KB='pulso.ultimacopia';
+
+/* pedir al navegador que no borre los datos por falta de espacio */
+(async function(){
+  try{
+    if(navigator.storage&&navigator.storage.persist){
+      const ya=await navigator.storage.persisted();
+      if(!ya)await navigator.storage.persist();
+    }
+  }catch(e){}
+})();
+
+/* --------- copia completa: todas las claves de la app --------- */
+function todasLasClaves(){
+  const k=[];
+  for(let i=0;i<localStorage.length;i++){
+    const n=localStorage.key(i);
+    if(n&&n.indexOf('pulso.')===0&&n!=='pulso.errores')k.push(n);
+  }
+  return k;
+}
+function exportarTodo(){
+  const datos={_app:'PULSO',_version:2,_fecha:new Date().toISOString(),d:{}};
+  todasLasClaves().forEach(k=>{try{datos.d[k]=localStorage.getItem(k)}catch(e){}});
+  return datos;
+}
+function importarTodo(obj){
+  if(!obj)return false;
+  /* copia nueva */
+  if(obj._app==='PULSO'&&obj.d){
+    Object.keys(obj.d).forEach(k=>{try{localStorage.setItem(k,obj.d[k])}catch(e){}});
+    return true;
+  }
+  /* copia vieja, del formato anterior */
+  let algo=false;
+  if(obj.rutinas){localStorage.setItem('pulso.rutinas',JSON.stringify(obj.rutinas));algo=true}
+  if(obj.historial){localStorage.setItem('pulso.historial',JSON.stringify(obj.historial));algo=true}
+  if(obj.ajustes){localStorage.setItem('pulso.ajustes',JSON.stringify(obj.ajustes));algo=true}
+  return algo;
+}
+function descargarCopia(){
+  const d=exportarTodo();
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:'application/json'}));
+  a.download='pulso-copia-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  try{localStorage.setItem(KB,String(Date.now()))}catch(e){}
+  const n=Object.keys(d.d).length;
+  avisar('Copia guardada con '+n+' bloques de datos');
+}
+function restaurarCopia(){
+  const i=document.createElement('input');
+  i.type='file';i.accept='.json,application/json';
+  i.onchange=()=>{
+    const f=i.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const obj=JSON.parse(r.result);
+        if(!confirm('Esto reemplaza los datos que tienes ahora en este dispositivo. ¿Continuar?'))return;
+        if(importarTodo(obj)){avisar('Datos restaurados');setTimeout(()=>location.reload(),900)}
+        else avisar('El archivo no parece una copia de PULSO');
+      }catch(e){avisar('No pudimos leer el archivo')}
+    };
+    r.readAsText(f);
+  };
+  i.click();
+}
+const diasSinCopia=()=>{
+  const t=parseInt(localStorage.getItem(KB)||'0',10);
+  return t?Math.floor((Date.now()-t)/864e5):null;
+};
+
+/* --------- reemplazar los botones viejos en Ajustes --------- */
+const est20=document.createElement('style');
+est20.textContent=`
+.copia{background:linear-gradient(135deg,#2E7DFF,#7B5CFF);color:#fff;border-radius:var(--r);padding:18px;margin-bottom:12px}
+.copia h4{font-family:var(--disp);font-weight:800;font-size:17px;margin:0 0 6px}
+.copia p{font-size:14px;line-height:1.5;opacity:.95;margin:0 0 14px}
+.copia .dos{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.copia button{padding:14px 10px;border-radius:100px;font-family:var(--disp);font-weight:700;font-size:14.5px}
+.copia .g{background:#fff;color:#2E7DFF}
+.copia .r{background:rgba(255,255,255,.22);color:#fff}
+.alerta-copia{background:#FFF6E6;border-radius:16px;padding:13px 15px;font-size:13.5px;line-height:1.5;color:#7A5B18;margin-bottom:12px}
+`;
+document.head.appendChild(est20);
+
+const aj20=$('#btnAjustes'),aj20Orig=aj20.onclick;
+aj20.onclick=function(){
+  aj20Orig.call(this);
+  const c=$('#infoCuerpo');
+  /* quitar los botones antiguos de exportar e importar */
+  [...c.querySelectorAll('.btn')].forEach(b=>{
+    const t=b.textContent;
+    if(t.includes('Exportar mis datos')||t.includes('Importar copia'))b.remove();
+  });
+  const caja=el('div','copia');
+  const d=diasSinCopia();
+  caja.innerHTML='<h4>💾 Copia de seguridad</h4>'+
+    '<p>Tus datos viven solo en este teléfono. Guarda una copia de vez en cuando: '+
+    'incluye entrenamientos, rutinas, programas, comidas, dietas, medidas y retos.'+
+    (d===null?' <b>Todavía no has hecho ninguna.</b>':d>14?' <b>Tu última copia fue hace '+d+' días.</b>':' Última copia: hace '+d+' día'+(d===1?'':'s')+'.')+
+    '</p>';
+  const dos=el('div','dos');
+  const g=el('button','g','Guardar copia');g.onclick=descargarCopia;
+  const r=el('button','r','Restaurar');r.onclick=restaurarCopia;
+  dos.appendChild(g);dos.appendChild(r);
+  caja.appendChild(dos);
+  const sep=c.querySelector('hr.sep');
+  if(sep)c.insertBefore(caja,sep.nextSibling);else c.appendChild(caja);
+
+  /* advertencia junto al botón de borrar todo */
+  const borrar=[...c.querySelectorAll('.btn.peligro')].find(b=>b.textContent.includes('Borrar todos'));
+  if(borrar&&!c.querySelector('.alerta-copia')){
+    const a=el('div','alerta-copia','⚠️ Antes de borrar nada, guarda una copia. También ten en cuenta que si limpias los datos de sitios web en los ajustes de tu navegador, se borra todo lo de PULSO.');
+    c.insertBefore(a,borrar);
+  }
+};
+
+/* --------- aviso suave si lleva mucho sin copia y tiene datos --------- */
+(function(){
+  const d=diasSinCopia();
+  const hayDatos=(leer('pulso.historial',[])||[]).length>=3||Object.keys(leer('pulso.comidas',{})||{}).length>=3;
+  if(!hayDatos)return;
+  if(d!==null&&d<21)return;
+  const hoyPrev20=pintarHoy;
+  pintarHoy=function(){
+    hoyPrev20();
+    if($('#v-hoy').querySelector('.alerta-copia'))return;
+    const a=el('div','alerta-copia');
+    a.innerHTML='💾 <b>Guarda una copia de tus datos.</b> Están solo en este teléfono. '+
+      'Ve a Ajustes › Copia de seguridad. Toma diez segundos.';
+    a.style.cursor='pointer';
+    a.onclick=()=>$('#btnAjustes').click();
+    $('#hoyActiva').appendChild(a);
+  };
+  pintarHoy();
+})();
 
 </script>
 </body>
