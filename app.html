@@ -5596,5 +5596,148 @@ abrirEscribir=function(){
 };
 
 </script>
+<script>
+/* =========================================================
+   MÓDULO 22 — los días de la comida, bien contados
+   1. La fecha se calculaba en UTC: después de las 8 PM en RD
+      la app ya contaba el día siguiente. Ahora usa tu hora local.
+   2. Se puede navegar a días anteriores y registrar en ellos.
+   ========================================================= */
+function claveDe(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+let diaSel=0;  /* 0 = hoy, 1 = ayer, ... */
+hoyClave=function(){
+  const d=new Date();d.setDate(d.getDate()-diaSel);
+  return claveDe(d);
+};
+const fechaDe=off=>{const d=new Date();d.setDate(d.getDate()-off);return d};
+function nombreDia(off){
+  if(off===0)return 'Hoy';
+  if(off===1)return 'Ayer';
+  const d=fechaDe(off);
+  return d.toLocaleDateString('es',{weekday:'long',day:'numeric',month:'short'});
+}
+
+/* ---- reparar datos que quedaron en el día equivocado ---- */
+(function reparar(){
+  try{
+    const c=leer(KD.c,{});
+    const manana=claveDe(new Date(Date.now()+864e5));
+    const hoy=claveDe(new Date());
+    /* si hay registro con fecha de mañana, casi seguro es de esta noche */
+    if(c[manana]&&(c[manana].items||[]).length){
+      const d=c[hoy]||{items:[],agua:0};
+      d.items=(d.items||[]).concat(c[manana].items);
+      d.agua=Math.max(d.agua||0,c[manana].agua||0);
+      c[hoy]=d;delete c[manana];
+      grabar(KD.c,c);comidas=c;
+      setTimeout(()=>avisar('Recuperamos el registro que había quedado en otro día'),1200);
+    }
+  }catch(e){}
+})();
+
+const est22=document.createElement('style');
+est22.textContent=`
+.nav-dia{display:flex;align-items:center;gap:10px;background:var(--blanco);border-radius:100px;padding:8px 10px;box-shadow:var(--sombra);margin-bottom:14px}
+.nav-dia button{width:38px;height:38px;border-radius:50%;background:var(--fondo);font-size:19px;font-weight:600;color:var(--tinta);flex:0 0 auto}
+.nav-dia button:disabled{opacity:.3}
+.nav-dia .cen{flex:1;text-align:center}
+.nav-dia b{display:block;font-family:var(--disp);font-weight:800;font-size:16px;text-transform:capitalize}
+.nav-dia small{color:var(--tenue);font-size:12px}
+.hist-dia{display:flex;align-items:center;gap:12px;background:var(--blanco);border-radius:16px;padding:14px 16px;margin-bottom:8px;box-shadow:0 3px 12px rgba(23,19,64,.05);width:100%;text-align:left}
+.hist-dia b{font-size:15px;font-weight:600;display:block;text-transform:capitalize}
+.hist-dia small{color:var(--tenue);font-size:12.5px}
+.hist-dia .kc{font-family:var(--disp);font-weight:800;font-size:18px;color:#1E56C2}
+.hist-dia .vacia{color:var(--tenue);font-size:13px;font-weight:600}
+.barra-sem{display:flex;gap:5px;align-items:flex-end;height:60px;margin:12px 0 6px}
+.barra-sem i{flex:1;border-radius:6px 6px 3px 3px;background:linear-gradient(to top,#00CC6A,#00C2A8);min-height:4px;opacity:.9}
+.barra-sem i.sin{background:var(--linea);opacity:1}
+.barra-sem-et{display:flex;gap:5px;font-size:10.5px;color:var(--tenue);text-align:center;font-weight:500}
+.barra-sem-et span{flex:1}
+`;
+document.head.appendChild(est22);
+
+/* ---- navegación de días dentro de Dieta ---- */
+const dietaPrev22=pintarDieta;
+pintarDieta=function(){
+  dietaPrev22();
+  const v=$('#v-dieta');
+  if(v.querySelector('.nav-dia'))return;
+  const nav=el('div','nav-dia');
+  const ant=el('button',null,'‹'),sig=el('button',null,'›');
+  const cen=el('div','cen');
+  const d=fechaDe(diaSel);
+  cen.innerHTML='<b>'+nombreDia(diaSel)+'</b><small>'+d.toLocaleDateString('es',{day:'numeric',month:'long'})+'</small>';
+  ant.onclick=()=>{if(diaSel<60){diaSel++;pintarDieta()}};
+  sig.onclick=()=>{if(diaSel>0){diaSel--;pintarDieta()}};
+  sig.disabled=diaSel===0;
+  cen.onclick=()=>{if(diaSel!==0){diaSel=0;pintarDieta()}};
+  nav.appendChild(ant);nav.appendChild(cen);nav.appendChild(sig);
+  const ref=v.querySelector('.titulo');
+  if(ref)ref.insertAdjacentElement('afterend',nav);else v.insertBefore(nav,v.firstChild);
+
+  /* acceso al historial completo */
+  const h=el('button','guia-btn');
+  h.style.background='linear-gradient(135deg,#2E7DFF,#00C2A8)';
+  h.style.boxShadow='0 10px 26px -10px rgba(46,125,255,.8)';
+  h.innerHTML='<span class="em">📅</span><span class="crece"><b>Historial de comidas</b><small>Mira lo que comiste los días anteriores</small></span><span>›</span>';
+  h.onclick=abrirHistorialComidas;
+  v.appendChild(h);
+};
+
+/* ---- pantalla de historial ---- */
+function abrirHistorialComidas(){
+  $('#infoTitulo').textContent='Historial de comidas';
+  const c=$('#infoCuerpo');c.innerHTML='';
+  const plan=perfil?calcularPlan(perfil):null;
+  /* gráfico de la última semana */
+  const sem=[];
+  for(let i=6;i>=0;i--){
+    const k=claveDe(fechaDe(i));
+    const t=totalDia(k);
+    sem.push({off:i,k:k,kcal:Math.round(t.kcal),dia:fechaDe(i)});
+  }
+  const mx=Math.max(...sem.map(x=>x.kcal),plan?plan.kcal:2000);
+  const g=el('div','dr');
+  g.innerHTML='<h4>📊 Últimos 7 días</h4>'+
+    '<div class="barra-sem">'+sem.map(x=>'<i class="'+(x.kcal?'':'sin')+'" style="height:'+Math.max(4,x.kcal/mx*60)+'px"></i>').join('')+'</div>'+
+    '<div class="barra-sem-et">'+sem.map(x=>'<span>'+['D','L','M','M','J','V','S'][x.dia.getDay()]+'</span>').join('')+'</div>';
+  const conDatos=sem.filter(x=>x.kcal>0);
+  if(conDatos.length)g.innerHTML+='<p style="margin-top:10px;font-size:13.5px;color:var(--tenue)">Promedio de los días registrados: <b>'+
+    Math.round(conDatos.reduce((a,x)=>a+x.kcal,0)/conDatos.length)+' kcal</b>'+
+    (plan?' · tu meta es '+plan.kcal+' kcal':'')+'</p>';
+  c.appendChild(g);
+  /* lista de días */
+  c.appendChild(el('div','etq','Día por día'));
+  let hay=false;
+  for(let i=0;i<30;i++){
+    const k=claveDe(fechaDe(i));
+    const reg=comidas[k];
+    const n=reg&&reg.items?reg.items.length:0;
+    if(!n&&i>7)continue;
+    hay=hay||n>0;
+    const t=totalDia(k);
+    const b=el('button','hist-dia');
+    b.innerHTML='<div class="crece"><b>'+nombreDia(i)+'</b><small>'+
+      (n?n+' registro'+(n>1?'s':'')+' · '+Math.round(t.p)+' g proteína'+(reg.agua?' · '+reg.agua+' vasos de agua':''):'Sin registrar')+
+      '</small></div>'+(n?'<div class="kc">'+Math.round(t.kcal)+'</div>':'<div class="vacia">—</div>');
+    b.onclick=()=>{diaSel=i;cerrar('#capaInfo');pintarDieta();
+      setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),120)};
+    c.appendChild(b);
+  }
+  if(!hay)c.appendChild(el('div','vacio','Todavía no hay registros.<br>Lo que anotes cada día se guarda por separado.'));
+  c.appendChild(el('div','dr','<h4>💡 Puedes anotar días pasados</h4>Si se te olvidó registrar algo de ayer, toca ese día y agrégalo. Todo se guarda por fecha, así que el día de hoy siempre empieza vacío.'));
+  abrir('#capaInfo');
+}
+
+/* al salir de Dieta, volver a hoy */
+const irAPrev22=irA;
+irA=function(v){
+  if(v!=='dieta')diaSel=0;
+  irAPrev22(v);
+};
+
+</script>
 </body>
 </html>
