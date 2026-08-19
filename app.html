@@ -5924,5 +5924,177 @@ if(typeof GNUT2!=='undefined'){
 }
 
 </script>
+<script>
+/* =========================================================
+   MÓDULO 25 — cómo se combinan los alimentos
+   Solo interacciones con respaldo real (absorción de nutrientes).
+   Nada de "alimentos prohibidos": se explica qué se aprovecha
+   mejor y qué conviene separar, sin alarmismo.
+   ========================================================= */
+const PROP={
+ calcio:['Leche entera','Leche descremada','Yogur natural','Yogur griego','Requesón','Queso de freír',
+   'Queso blanco fresco','Queso mozzarella','Queso cheddar','Café con leche','Morir soñando','Leche de almendra sin azúcar'],
+ hierroVeg:['Habichuelas guisadas','Habichuelas rojas','Habichuelas blancas','Frijoles negros','Lentejas cocidas',
+   'Garbanzos cocidos','Espinaca','Guisantes','Tofu','Avena cocida','Quinoa cocida','Moro de guandules','Arroz con habichuelas'],
+ hierroHemo:['Res guisada','Carne de res','Carne molida de res','Hígado de pollo','Hígado de res',
+   'Hígado de pollo encebollado','Molleja de pollo','Mollejas guisadas','Bistec de res','Chuleta de cerdo','Lomo de cerdo'],
+ vitC:['Naranja','Mandarina','Limón','Fresas','Kiwi','Piña','Lechosa','Pimiento','Brócoli','Tomate','Jugo de chinola','Mango','Coliflor','Repollo'],
+ tanino:['Café negro','Café con leche','Té verde'],
+ grasaBuena:['Aguacate','Aceite de oliva','Aceite','Almendras','Nueces','Maní','Pistachos',
+   'Semillas de girasol','Semillas de chía','Semillas de linaza','Hummus','Mantequilla de maní'],
+ carotenos:['Zanahoria','Auyama','Batata hervida','Espinaca','Brócoli','Tomate','Lechuga','Pimiento','Ensalada verde','Ensalada de repollo'],
+ vitA:['Hígado de pollo','Hígado de res','Hígado de pollo encebollado'],
+ alcohol:['Cerveza','Vino'],
+ fitatos:['Pan integral','Arroz integral','Avena cocida','Cereal integral','Pasta integral','Granola']
+};
+const PROPI={};
+Object.keys(PROP).forEach(k=>PROP[k].forEach(n=>{(PROPI[n]=PROPI[n]||[]).push(k)}));
+const propsDe=nom=>PROPI[String(nom).split(' · ')[0]]||[];
+
+const REGLAS=[
+{a:'hierroVeg',b:'vitC',tipo:'bien',t:'Buena combinación',
+ x:'La vitamina C aumenta bastante la absorción del hierro de origen vegetal, que por sí solo se absorbe poco. Es de las interacciones mejor documentadas en nutrición.'},
+{a:'hierroVeg',b:'calcio',tipo:'ojo',t:'Se aprovecha menos el hierro',
+ x:'El calcio compite con el hierro por la misma vía de absorción. No es que haga daño, pero si buscas subir tu hierro, conviene dejar el lácteo para otro momento del día.'},
+{a:'hierroHemo',b:'calcio',tipo:'ojo',t:'Se aprovecha menos el hierro',
+ x:'El calcio reduce algo la absorción del hierro de la carne, aunque menos que con el hierro vegetal. Separarlos una o dos horas es suficiente si te interesa el hierro.'},
+{a:'hierroVeg',b:'tanino',tipo:'ojo',t:'El café y el té bajan la absorción del hierro',
+ x:'Los taninos del café y el té pueden reducir de forma importante la absorción del hierro vegetal cuando se toman con la comida. Tomarlos una hora antes o después evita el efecto.'},
+{a:'hierroHemo',b:'tanino',tipo:'ojo',t:'Separa el café de esta comida',
+ x:'Los taninos también afectan al hierro de la carne, aunque en menor medida. Si estás cuidando tu hierro, deja el café para más tarde.'},
+{a:'carotenos',b:'grasaBuena',tipo:'bien',t:'Buena combinación',
+ x:'Las vitaminas A, D, E y K y los carotenos necesitan grasa para absorberse. Una ensalada con aceite de oliva o aguacate aprovecha mucho más sus nutrientes que una sin nada de grasa.'},
+{a:'fitatos',b:'hierroVeg',tipo:'ojo',t:'Los integrales bajan un poco el hierro',
+ x:'Los fitatos de los granos integrales reducen algo la absorción del hierro y el zinc. Remojar las legumbres o acompañar con vitamina C compensa el efecto.'},
+{a:'vitA',b:'vitA',tipo:'ojo',t:'Mucha vitamina A en un solo día',
+ x:'El hígado es muy alto en vitamina A y esta se acumula en el cuerpo. Dos porciones el mismo día es bastante. Una o dos veces por semana es un ritmo razonable.'}
+];
+function analizarCombos(items){
+  const props=items.map(i=>({nom:i.nom,p:propsDe(i.nom)}));
+  const res=[];
+  REGLAS.forEach(r=>{
+    const A=props.filter(x=>x.p.includes(r.a));
+    const B=props.filter(x=>x.p.includes(r.b));
+    if(!A.length||!B.length)return;
+    if(r.a===r.b&&A.length<2)return;
+    const na=A[0].nom,nb=(r.a===r.b?A[1]:B.find(x=>x.nom!==na)||B[0]).nom;
+    if(na===nb&&r.a!==r.b)return;
+    if(res.some(x=>x.r===r))return;
+    res.push({r:r,a:na,b:nb});
+  });
+  return res;
+}
+
+const est25=document.createElement('style');
+est25.textContent=`
+.combo{border-radius:18px;padding:15px 17px;margin-bottom:9px}
+.combo.bien{background:linear-gradient(135deg,#00CC6A,#00C2A8);color:#fff}
+.combo.ojo{background:#FFF6E6;color:#5E4712;border:1px solid #F5E0B8}
+.combo b{display:block;font-family:var(--disp);font-weight:800;font-size:15.5px;margin-bottom:3px}
+.combo .par{font-size:12.5px;font-weight:600;opacity:.9;margin-bottom:6px}
+.combo p{font-size:14px;line-height:1.5;margin:0}
+.mito{background:var(--blanco);border-radius:16px;padding:14px 16px;margin-bottom:8px;box-shadow:0 3px 12px rgba(23,19,64,.05)}
+.mito b{display:block;font-size:14.8px;font-weight:700;margin-bottom:4px}
+.mito b::before{content:'❌ ';}
+.mito p{font-size:13.8px;line-height:1.5;color:#4A4478;margin:0}
+.mito p::before{content:'✅ ';font-weight:700}
+`;
+document.head.appendChild(est25);
+
+/* ---------- aviso al momento de agregar ---------- */
+function avisarCombo(nuevo){
+  const l=comidas[hoyClave()];
+  if(!l||!l.items||l.items.length<2)return;
+  const combos=analizarCombos(l.items);
+  const rel=combos.filter(c=>c.a===nuevo||c.b===nuevo);
+  if(!rel.length)return;
+  const c=rel.find(x=>x.r.tipo==='ojo')||rel[0];
+  setTimeout(()=>{
+    $('#infoTitulo').textContent=c.r.tipo==='bien'?'Buena combinación':'Un detalle sobre esta mezcla';
+    const cc=$('#infoCuerpo');cc.innerHTML='';
+    const d=el('div','combo '+c.r.tipo);
+    d.innerHTML='<b>'+(c.r.tipo==='bien'?'✅ ':'💡 ')+c.r.t+'</b>'+
+      '<div class="par">'+c.a+' + '+c.b+'</div><p>'+c.r.x+'</p>';
+    cc.appendChild(d);
+    cc.appendChild(el('div','dr','<h4>Para que quede claro</h4>'+
+      (c.r.tipo==='bien'?'No tienes que hacer nada: así como lo comiste está bien aprovechado.'
+      :'No es que la comida esté mal ni que haga daño. Solo se aprovecha menos ese nutriente. Si no estás cuidando el hierro en particular, puedes comer tranquilo.')));
+    const b=el('button','btn','Entendido');
+    b.onclick=()=>cerrar('#capaInfo');
+    cc.appendChild(b);
+    const v=el('button','btn fantasma','Ver todas las combinaciones del día');
+    v.onclick=()=>{cerrar('#capaInfo');setTimeout(abrirCombos,280)};
+    cc.appendChild(v);
+    abrir('#capaInfo');
+  },700);
+}
+/* engancharse a cualquier registro de comida */
+const grabarPrev25=grabar;
+grabar=function(k,v){
+  const r=grabarPrev25(k,v);
+  if(k===KD.c){
+    try{
+      const l=v[hoyClave()];
+      if(l&&l.items&&l.items.length>=2){
+        const ult=l.items[l.items.length-1];
+        if(ult&&ult.nom!==grabar._ultimo){grabar._ultimo=ult.nom;avisarCombo(ult.nom)}
+      }
+    }catch(e){}
+  }
+  return r;
+};
+
+/* ---------- pantalla completa de combinaciones ---------- */
+function abrirCombos(){
+  $('#infoTitulo').textContent='Cómo combinaste tu día';
+  const c=$('#infoCuerpo');c.innerHTML='';
+  const l=comidas[hoyClave()];
+  const items=(l&&l.items)||[];
+  if(items.length<2){
+    c.appendChild(el('div','vacio','Registra al menos dos alimentos y aquí te decimos cómo se llevan entre sí.'));
+  }else{
+    const combos=analizarCombos(items);
+    if(!combos.length)c.appendChild(el('div','vacio','No hay interacciones destacables entre lo que comiste hoy. Todo normal.'));
+    combos.forEach(x=>{
+      const d=el('div','combo '+x.r.tipo);
+      d.innerHTML='<b>'+(x.r.tipo==='bien'?'✅ ':'💡 ')+x.r.t+'</b>'+
+        '<div class="par">'+x.a+' + '+x.b+'</div><p>'+x.r.x+'</p>';
+      c.appendChild(d);
+    });
+  }
+  c.appendChild(el('div','etq','Lo que NO es cierto'));
+  const mitos=[
+   ['No se puede mezclar leche con pescado','No existe ninguna evidencia de que esa mezcla cause daño. Es una creencia popular sin respaldo.'],
+   ['La fruta después de comer se fermenta y hace daño','El estómago digiere la fruta igual que cualquier alimento. Comerla de postre no causa fermentación ni gases por sí sola.'],
+   ['No hay que mezclar proteínas con carbohidratos','El aparato digestivo libera todas las enzimas a la vez. Arroz con pollo o pan con huevo se digieren perfectamente.'],
+   ['La leche con limón o naranja corta el estómago','La leche se corta en el estómago de todas formas por el ácido gástrico. Eso es parte normal de la digestión.'],
+   ['Beber agua con la comida diluye los jugos gástricos','El estómago ajusta su acidez solo. Tomar agua en las comidas no afecta la digestión ni engorda.']
+  ];
+  mitos.forEach(([m,r])=>c.appendChild(el('div','mito','<b>'+m+'</b><p>'+r+'</p>')));
+  c.appendChild(el('div','aviso-salud','Las interacciones que sí mostramos son de absorción de nutrientes y están descritas en la literatura nutricional. Son cuestión de aprovechamiento, no de riesgo. Si tomas medicamentos o suplementos de hierro, calcio o zinc, consulta con tu médico sobre los horarios, porque ahí sí importa bastante.'));
+  abrir('#capaInfo');
+}
+
+/* ---------- acceso desde Dieta ---------- */
+const dietaPrev25=pintarDieta;
+pintarDieta=function(){
+  dietaPrev25();
+  const v=$('#v-dieta');
+  const l=comidas[hoyClave()];
+  const items=(l&&l.items)||[];
+  const combos=items.length>=2?analizarCombos(items):[];
+  const b=el('button','guia-btn');
+  b.style.background='linear-gradient(135deg,#FF8A3D,#FF5FA2)';
+  b.style.boxShadow='0 10px 26px -10px rgba(255,138,61,.8)';
+  const bien=combos.filter(x=>x.r.tipo==='bien').length,ojo=combos.filter(x=>x.r.tipo==='ojo').length;
+  b.innerHTML='<span class="em">🔗</span><span class="crece"><b>Cómo se combinan tus comidas</b><small>'+
+    (combos.length?bien+' buena'+(bien===1?'':'s')+' · '+ojo+' para tener en cuenta':'Interacciones reales y mitos desmentidos')+
+    '</small></span><span>›</span>';
+  b.onclick=abrirCombos;
+  v.appendChild(b);
+};
+pintarDieta();
+
+</script>
 </body>
 </html>
