@@ -6096,5 +6096,46 @@ pintarDieta=function(){
 pintarDieta();
 
 </script>
+<script>
+/* =========================================================
+   MÓDULO 26 — versión visible
+   ========================================================= */
+const PULSO_VERSION='24';
+const PULSO_FECHA='16 de agosto';
+(function(){
+  const est=document.createElement('style');
+  est.textContent='.ver-badge{text-align:center;font-size:11.5px;color:var(--tenue);padding:14px 0 4px;font-weight:600}';
+  document.head.appendChild(est);
+  /* en Ajustes */
+  const b=document.querySelector('#btnAjustes');
+  if(b){
+    const o=b.onclick;
+    b.onclick=function(){
+      o&&o.call(this);
+      const c=document.querySelector('#infoCuerpo');if(!c)return;
+      const v=c.querySelector('.vacio');
+      const t='PULSO · versión '+PULSO_VERSION+' ('+PULSO_FECHA+')<br>Tus datos se guardan solo en este dispositivo.';
+      if(v)v.innerHTML=t;
+      else{const d=document.createElement('div');d.className='vacio';d.innerHTML=t;c.appendChild(d)}
+    };
+  }
+  /* al pie de la pantalla Hoy, para verlo sin entrar a nada */
+  const p=window.pintarHoy;
+  if(typeof p==='function'){
+    window.pintarHoy=function(){
+      p();
+      const v=document.querySelector('#v-hoy');
+      if(v&&!v.querySelector('.ver-badge')){
+        const d=document.createElement('div');
+        d.className='ver-badge';
+        d.textContent='PULSO v'+PULSO_VERSION;
+        v.appendChild(d);
+      }
+    };
+    window.pintarHoy();
+  }
+})();
+
+</script>
 </body>
 </html>
